@@ -26,7 +26,7 @@ watch(user, (newUser) => {
     <div class="text-center">
       <!-- Animated Logo -->
       <div class="w-24 h-24 mx-auto rounded-gummy-xl gradient-orange flex items-center justify-center shadow-gummy animate-pulse-gummy">
-        <span class="text-white text-4xl font-extrabold">H</span>
+        <span class="text-white text-4xl font-extrabold">A</span>
       </div>
       
       <h1 class="text-2xl font-bold text-heat-black mt-6 mb-2">

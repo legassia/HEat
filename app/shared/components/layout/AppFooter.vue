@@ -7,9 +7,9 @@ const socialLinks = [
 ]
 
 const contactInfo = [
-  { icon: 'i-lucide-phone', text: '+58 XXX-XXX-XXXX' },
-  { icon: 'i-lucide-clock', text: 'Lun-Dom: 8am - 10pm' },
-  { icon: 'i-lucide-map-pin', text: 'Tu ciudad, Venezuela' }
+  { icon: 'i-lucide-phone', text: '+58 322-857-7409' },
+  { icon: 'i-lucide-clock', text: 'Mar-Sab: 1pm - 10pm' },
+  { icon: 'i-lucide-map-pin', text: 'Bogotá D.C, Colombia' }
 ]
 </script>
 
@@ -21,12 +21,12 @@ const contactInfo = [
         <div>
           <div class="flex items-center gap-3 mb-4">
             <div class="w-12 h-12 rounded-gummy gradient-orange flex items-center justify-center shadow-gummy">
-              <span class="text-white text-2xl font-extrabold">H</span>
+              <span class="text-white text-2xl font-extrabold">A</span>
             </div>
-            <span class="text-3xl font-extrabold gradient-text">HEat</span>
+            <span class="text-3xl font-extrabold gradient-text">ArePaisas</span>
           </div>
           <p class="text-heat-gray-dark text-sm leading-relaxed">
-            Tu lugar favorito para pedir arepas, perros calientes y hamburguesas. 
+            Tu lugar favorito para pedir arepas, chorizos y hamburguesas. 
             Sabor casero con un toque especial.
           </p>
         </div>

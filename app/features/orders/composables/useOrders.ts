@@ -1,10 +1,5 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '~/types/database.types'
-
-type OrderInsert = Database['public']['Tables']['orders']['Insert']
-
 export function useOrders() {
-  const supabase = useSupabaseClient() as SupabaseClient<Database>
+  const supabase = useSupabaseClient()
   const user = useSupabaseUser()
   
   const isLoading = ref(false)
@@ -19,7 +14,7 @@ export function useOrders() {
     error.value = null
     
     try {
-      const insertData: OrderInsert = {
+      const insertData = {
         user_id: user.value.id,
         total: orderData.total,
         notes: orderData.notes ?? null
@@ -27,7 +22,7 @@ export function useOrders() {
       
       const { data, error: insertError } = await supabase
         .from('orders')
-        .insert(insertData)
+        .insert(insertData as never)
         .select('id, plate_code')
         .single()
       
@@ -73,7 +68,7 @@ export function useOrders() {
     try {
       const { error: updateError } = await supabase
         .from('orders')
-        .update({ status: 'cancelled' })
+        .update({ status: 'cancelled' } as never)
         .eq('id', orderId)
         .eq('user_id', user.value.id)
       

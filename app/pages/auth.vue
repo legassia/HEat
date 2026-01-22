@@ -4,7 +4,7 @@ definePageMeta({
 })
 
 useHead({
-  title: 'HEat - Iniciar Sesión'
+  title: 'ArePaisas - Iniciar Sesión'
 })
 
 const supabase = useSupabaseClient()
@@ -96,10 +96,10 @@ const verifyOtp = async () => {
       <div class="text-center mb-8">
         <NuxtLink to="/" class="inline-flex items-center gap-3">
           <div class="w-16 h-16 rounded-gummy-lg gradient-orange flex items-center justify-center shadow-gummy">
-            <span class="text-white text-3xl font-extrabold">H</span>
+            <span class="text-white text-3xl font-extrabold">A</span>
           </div>
         </NuxtLink>
-        <h1 class="text-3xl font-extrabold gradient-text mt-4">HEat</h1>
+        <h1 class="text-3xl font-extrabold gradient-text mt-4">ArePaisas</h1>
         <p class="text-heat-gray-dark mt-2">
           {{ mode === 'login' ? 'Bienvenido de vuelta' : 'Crea tu cuenta' }}
         </p>
@@ -152,7 +152,7 @@ const verifyOtp = async () => {
                 type="tel"
                 :disabled="showOtpInput || isLoading"
                 class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
-                placeholder="+58 XXX-XXX-XXXX"
+                placeholder="+57 314-368-6786"
               />
             </div>
             

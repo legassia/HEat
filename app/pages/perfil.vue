@@ -137,7 +137,7 @@ const saveProfile = async () => {
               type="tel"
               :disabled="!isEditing"
               class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
-              placeholder="+58 XXX-XXX-XXXX"
+              placeholder="+58 322-857-7409"
             />
           </div>
           

@@ -7,67 +7,77 @@ const props = defineProps<{
 
 const cartStore = useCartStore()
 
+// Get emoji based on category
+const categoryEmoji = computed(() => {
+  const emojis: Record<string, string> = {
+    arepas: '🫓',
+    perros: '🌭',
+    hamburguesas: '🍔',
+    chorizos: '🥓',
+    pinchos: '🍢'
+  }
+  return emojis[props.item.category || ''] || '🍔'
+})
+
 const itemTotal = computed(() => {
-  const optionsTotal = props.item.selectedOptions.reduce((sum, opt) => sum + opt.priceModifier, 0)
+  const optionsTotal = props.item.selectedOptions.reduce((sum, opt) => 
+    sum + (opt.priceModifier * (opt.quantity || 1)), 0
+  )
   return (props.item.basePrice + optionsTotal) * props.item.quantity
 })
 
 const formattedTotal = computed(() => {
-  return new Intl.NumberFormat('es-VE', {
+  return new Intl.NumberFormat('es-CO', {
     style: 'currency',
-    currency: 'COP'
+    currency: 'COP',
+    minimumFractionDigits: 0
   }).format(itemTotal.value)
+})
+
+// Format options for display
+const optionsText = computed(() => {
+  return props.item.selectedOptions
+    .map(o => o.quantity > 1 ? `${o.quantity}x ${o.name}` : o.name)
+    .join(', ')
 })
 </script>
 
 <template>
-  <div class="card-gummy flex gap-4 animate-slide-up">
+  <div class="bg-heat-white rounded-gummy-lg border border-heat-gray-medium/30 p-4 flex gap-4">
     <!-- Image -->
-    <div class="w-20 h-20 rounded-gummy-sm bg-heat-gray-soft overflow-hidden shrink-0">
-      <img 
-        v-if="item.imageUrl"
-        :src="item.imageUrl"
-        :alt="item.productName"
-        class="w-full h-full object-cover"
-      />
-      <div v-else class="w-full h-full flex items-center justify-center">
-        <span class="text-3xl">🍔</span>
-      </div>
+    <div class="w-16 h-16 rounded-gummy-sm bg-heat-gray-soft flex items-center justify-center shrink-0">
+      <span class="text-3xl">{{ categoryEmoji }}</span>
     </div>
     
     <!-- Info -->
     <div class="flex-1 min-w-0">
-      <h4 class="font-bold text-heat-black truncate">{{ item.productName }}</h4>
+      <h4 class="font-bold text-heat-black text-sm truncate">{{ item.productName }}</h4>
       
       <!-- Selected Options -->
-      <div v-if="item.selectedOptions.length > 0" class="mt-1">
-        <p class="text-xs text-heat-gray-dark truncate">
-          {{ item.selectedOptions.map(o => o.name).join(', ') }}
-        </p>
-      </div>
+      <p v-if="optionsText" class="text-xs text-heat-gray-dark truncate mt-1">
+        {{ optionsText }}
+      </p>
       
       <!-- Price & Quantity -->
       <div class="flex items-center justify-between mt-2">
         <span class="font-bold text-heat-orange">{{ formattedTotal }}</span>
         
         <!-- Quantity Controls -->
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1">
           <button 
-            class="w-8 h-8 rounded-full bg-heat-gray-soft flex items-center justify-center hover:bg-heat-orange/10 transition-colors gummy-press"
+            class="w-7 h-7 rounded-full bg-heat-gray-soft flex items-center justify-center hover:bg-heat-orange/10 transition-colors"
             @click="cartStore.decrementQuantity(item.id)"
-            aria-label="Reducir cantidad"
           >
-            <span class="i-lucide-minus text-sm text-heat-gray-dark" />
+            <span class="i-lucide-minus text-xs text-heat-gray-dark" />
           </button>
           
-          <span class="w-8 text-center font-bold">{{ item.quantity }}</span>
+          <span class="w-6 text-center font-bold text-sm">{{ item.quantity }}</span>
           
           <button 
-            class="w-8 h-8 rounded-full gradient-orange flex items-center justify-center shadow-gummy gummy-press"
+            class="w-7 h-7 rounded-full bg-gradient-to-r from-heat-orange to-heat-orange-light flex items-center justify-center"
             @click="cartStore.incrementQuantity(item.id)"
-            aria-label="Aumentar cantidad"
           >
-            <span class="i-lucide-plus text-sm text-white" />
+            <span class="i-lucide-plus text-xs text-white" />
           </button>
         </div>
       </div>
@@ -75,12 +85,10 @@ const formattedTotal = computed(() => {
     
     <!-- Remove Button -->
     <button 
-      class="self-start p-2 rounded-full hover:bg-red-50 text-heat-gray-dark hover:text-red-500 transition-colors"
+      class="self-start p-1.5 rounded-full hover:bg-red-50 text-heat-gray-medium hover:text-red-500 transition-colors"
       @click="cartStore.removeItem(item.id)"
-      aria-label="Eliminar del carrito"
     >
-      <span class="i-lucide-x text-lg" />
+      <span class="i-lucide-x text-base" />
     </button>
   </div>
 </template>
-

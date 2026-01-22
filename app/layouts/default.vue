@@ -31,7 +31,7 @@ const isActive = (path: string) => {
       
       <!-- Main Content -->
       <main 
-        class="flex-1 min-h-screen pb-[var(--bottom-nav-height)] lg:pb-0 lg:ml-[var(--sidenav-width)]"
+        class="flex-1 min-h-screen pb-[var(--bottom-nav-height)] lg:pb-0 lg:ml-[var(--sidenav-width)] lg:pt-[var(--nav-height)]"
       >
         <div class="max-w-7xl mx-auto px-4 py-6 lg:px-8">
           <slot />
@@ -47,10 +47,9 @@ const isActive = (path: string) => {
     />
     
     <!-- Footer (Desktop only) -->
-    <AppFooter class="hidden lg:block" />
+    <AppFooter class="hidden lg:block lg:ml-[var(--sidenav-width)]" />
     
     <!-- Cart Drawer -->
     <CartDrawer />
   </div>
 </template>
-

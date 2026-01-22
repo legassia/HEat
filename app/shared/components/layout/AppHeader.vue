@@ -13,9 +13,9 @@ const cartStore = useCartStore()
       <!-- Logo -->
       <NuxtLink to="/" class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-gummy gradient-orange flex items-center justify-center shadow-gummy">
-          <span class="text-white text-xl font-extrabold">H</span>
+          <span class="text-white text-xl font-extrabold">A</span>
         </div>
-        <span class="text-2xl font-extrabold gradient-text">HEat</span>
+        <span class="text-2xl font-extrabold gradient-text">ArePaisas</span>
       </NuxtLink>
       
       <!-- Search (future feature) -->

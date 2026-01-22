@@ -1,51 +1,61 @@
 <script setup lang="ts">
+import { toast } from 'vue-sonner'
+import { useCartStore } from '~/features/cart/store/cart.store'
 import type { Product } from '../types/product.types'
 
 const props = defineProps<{
   product: Product
 }>()
 
-const emit = defineEmits<{
-  customize: []
-}>()
+const cartStore = useCartStore()
 
 const formattedPrice = computed(() => {
-  return new Intl.NumberFormat('es-VE', {
+  return new Intl.NumberFormat('es-CO', {
     style: 'currency',
-    currency: 'COP'
+    currency: 'COP',
+    minimumFractionDigits: 0
   }).format(props.product.basePrice)
 })
+
+// Add directly to cart
+const addToCart = () => {
+  cartStore.addItem({
+    productId: props.product.id,
+    productName: props.product.name,
+    basePrice: props.product.basePrice,
+    selectedOptions: [],
+    category: props.product.category
+  })
+  
+  toast.success('¡Agregado al carrito!', {
+    description: props.product.name
+  })
+}
 </script>
 
 <template>
   <div 
-    class="card-gummy w-[200px] lg:w-[220px] gummy-3d hover:shadow-gummy hover:-translate-y-2 transition-all duration-300 cursor-pointer group"
-    @click="emit('customize')"
+    class="relative bg-heat-white rounded-gummy-lg border border-heat-gray-medium/30 p-4 hover:shadow-gummy hover:-translate-y-2 transition-all duration-300 cursor-pointer group"
+    @click="addToCart"
   >
-    <!-- Popular Badge -->
-    <div 
+    <!-- Popular Badge - Fixed positioning -->
+    <span 
       v-if="product.popular"
-      class="absolute -top-2 -right-2 z-10"
+      class="absolute -top-2 -right-2 px-3 py-1 bg-heat-cyan text-white text-xs font-bold rounded-full shadow-gummy-cyan z-20 pointer-events-none"
     >
-      <span class="px-3 py-1 bg-heat-cyan text-white text-xs font-bold rounded-full shadow-gummy-cyan">
-        Popular
-      </span>
-    </div>
+      Popular
+    </span>
     
     <!-- Image -->
-    <div class="relative h-32 rounded-gummy-sm bg-heat-gray-soft mb-3 overflow-hidden flex items-center justify-center">
-      <!-- Placeholder emoji - will be replaced with actual images -->
-      <span class="text-6xl group-hover:scale-110 transition-transform duration-300">
+    <div class="relative h-28 rounded-gummy-sm bg-heat-gray-soft mb-3 flex items-center justify-center overflow-hidden">
+      <span class="text-5xl group-hover:scale-110 transition-transform duration-300">
         {{ product.image }}
       </span>
-      
-      <!-- Overlay on hover -->
-      <div class="absolute inset-0 bg-heat-orange/0 group-hover:bg-heat-orange/10 transition-colors rounded-gummy-sm" />
     </div>
     
     <!-- Info -->
     <div>
-      <h4 class="font-bold text-heat-black line-clamp-2 mb-2 group-hover:text-heat-orange transition-colors">
+      <h4 class="font-bold text-heat-black text-sm line-clamp-2 mb-2 group-hover:text-heat-orange transition-colors">
         {{ product.name }}
       </h4>
       
@@ -59,9 +69,9 @@ const formattedPrice = computed(() => {
         
         <!-- Quick Add Button -->
         <button 
-          class="w-10 h-10 rounded-full gradient-orange flex items-center justify-center shadow-gummy hover:shadow-gummy-hover gummy-press"
-          @click.stop="emit('customize')"
-          aria-label="Personalizar"
+          class="w-10 h-10 rounded-full bg-gradient-to-r from-heat-orange to-heat-orange-light flex items-center justify-center shadow-gummy hover:shadow-gummy-hover transition-all hover:scale-110 active:scale-95"
+          @click.stop="addToCart"
+          aria-label="Agregar al carrito"
         >
           <span class="i-lucide-plus text-white text-lg" />
         </button>
@@ -69,4 +79,3 @@ const formattedPrice = computed(() => {
     </div>
   </div>
 </template>
-

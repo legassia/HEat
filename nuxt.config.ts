@@ -9,7 +9,20 @@ export default defineNuxtConfig({
   modules: [
     '@nuxtjs/supabase',
     '@unocss/nuxt',
-    '@vite-pwa/nuxt'
+    '@vite-pwa/nuxt',
+    '@pinia/nuxt',
+    'pinia-plugin-persistedstate/nuxt'
+  ],
+
+  // Auto-import components from these directories
+  components: [
+    { path: '~/shared/components/ui', prefix: '' },
+    { path: '~/shared/components/layout', prefix: '' },
+    { path: '~/features/cart/components', prefix: '' },
+    { path: '~/features/home/components', prefix: '' },
+    { path: '~/features/orders/components', prefix: '' },
+    { path: '~/features/auth/components', prefix: '' },
+    { path: '~/features/user/components', prefix: '' }
   ],
 
   css: [

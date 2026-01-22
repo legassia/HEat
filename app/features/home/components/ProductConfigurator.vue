@@ -51,7 +51,8 @@ const addToCart = () => {
     selectedOptions: selectedOpts.map(opt => ({
       id: opt.id,
       name: opt.name,
-      priceModifier: opt.priceModifier
+      priceModifier: opt.priceModifier,
+      quantity: 1
     })),
     imageUrl: props.product.imageUrl
   })

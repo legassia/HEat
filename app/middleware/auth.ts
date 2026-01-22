@@ -1,8 +1,10 @@
 export default defineNuxtRouteMiddleware((to) => {
-  const user = useSupabaseUser()
+  // TEMPORARILY DISABLED FOR TESTING
+  // Uncomment when Supabase is configured
   
-  if (!user.value) {
-    return navigateTo('/auth')
-  }
+  // const user = useSupabaseUser()
+  // 
+  // if (!user.value) {
+  //   return navigateTo('/auth')
+  // }
 })
-

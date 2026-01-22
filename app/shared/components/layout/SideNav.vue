@@ -24,13 +24,13 @@ const isExpanded = ref(false)
     <div class="h-[var(--nav-height)] flex items-center justify-center border-b border-heat-gray-medium/30">
       <NuxtLink to="/" class="flex items-center gap-3 overflow-hidden">
         <div class="w-10 h-10 rounded-gummy gradient-orange flex items-center justify-center shadow-gummy shrink-0">
-          <span class="text-white text-xl font-extrabold">H</span>
+          <span class="text-white text-xl font-extrabold">A</span>
         </div>
         <span 
           v-if="isExpanded" 
           class="text-2xl font-extrabold gradient-text whitespace-nowrap animate-slide-in-right"
         >
-          HEat
+          ArePaisas
         </span>
       </NuxtLink>
     </div>

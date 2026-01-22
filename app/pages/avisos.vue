@@ -10,9 +10,8 @@ const announcements = [
     title: 'Horario de Atención',
     icon: 'i-lucide-clock',
     content: [
-      { day: 'Lunes - Viernes', hours: '8:00 AM - 10:00 PM' },
-      { day: 'Sábados', hours: '9:00 AM - 11:00 PM' },
-      { day: 'Domingos', hours: '10:00 AM - 9:00 PM' }
+      { day: 'Martes - Viernes', hours: '1:00 PM - 11:00 PM' },
+      { day: 'Sábados', hours: '1:00 PM - 10:00 PM' },
     ]
   },
   {
@@ -21,9 +20,9 @@ const announcements = [
     title: 'Contacto',
     icon: 'i-lucide-phone',
     content: [
-      { label: 'Teléfono', value: '+58 XXX-XXX-XXXX' },
-      { label: 'WhatsApp', value: '+58 XXX-XXX-XXXX' },
-      { label: 'Email', value: 'contacto@heat.com' }
+      { label: 'Teléfono', value: '+57 314-368-6786' },
+      { label: 'WhatsApp', value: '+57 322-857-7409' },
+      { label: 'Email', value: 'arepaisas@gmail.com' }
     ]
   },
   {
@@ -121,8 +120,8 @@ const promos = [
                   :key="idx"
                   class="flex justify-between text-sm"
                 >
-                  <span class="text-heat-gray-dark">{{ schedule.day }}</span>
-                  <span class="font-semibold text-heat-black">{{ schedule.hours }}</span>
+                  <span class="text-heat-gray-dark">{{ (schedule as { day: string }).day }}</span>
+                  <span class="font-semibold text-heat-black">{{ (schedule as { hours: string }).hours }}</span>
                 </div>
               </div>
             </template>
@@ -135,8 +134,8 @@ const promos = [
                   :key="idx"
                   class="text-sm"
                 >
-                  <span class="text-heat-gray-dark">{{ contact.label }}:</span>
-                  <span class="font-semibold text-heat-black ml-2">{{ contact.value }}</span>
+                  <span class="text-heat-gray-dark">{{ (contact as { label: string }).label }}:</span>
+                  <span class="font-semibold text-heat-black ml-2">{{ (contact as { value: string }).value }}</span>
                 </div>
               </div>
             </template>
@@ -173,7 +172,7 @@ const promos = [
                   <span class="font-semibold">Arepas</span>
                 </div>
               </td>
-              <td class="p-4 text-right font-bold text-heat-orange">$2.50</td>
+              <td class="p-4 text-right font-bold text-heat-orange">$2.500</td>
             </tr>
             <tr class="border-b border-heat-gray-medium/30 hover:bg-heat-gray-soft/50 transition-colors">
               <td class="p-4">
@@ -182,7 +181,7 @@ const promos = [
                   <span class="font-semibold">Perros Calientes</span>
                 </div>
               </td>
-              <td class="p-4 text-right font-bold text-heat-orange">$3.00</td>
+              <td class="p-4 text-right font-bold text-heat-orange">$3.000</td>
             </tr>
             <tr class="hover:bg-heat-gray-soft/50 transition-colors">
               <td class="p-4">
@@ -191,7 +190,7 @@ const promos = [
                   <span class="font-semibold">Hamburguesas</span>
                 </div>
               </td>
-              <td class="p-4 text-right font-bold text-heat-orange">$4.00</td>
+              <td class="p-4 text-right font-bold text-heat-orange">$15.000</td>
             </tr>
           </tbody>
         </table>

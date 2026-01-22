@@ -4,6 +4,7 @@ export interface CartItemOption {
   id: string
   name: string
   priceModifier: number
+  quantity: number
 }
 
 export interface CartItem {
@@ -14,6 +15,7 @@ export interface CartItem {
   quantity: number
   selectedOptions: CartItemOption[]
   imageUrl?: string
+  category?: string
 }
 
 interface CartState {
@@ -23,9 +25,11 @@ interface CartState {
 
 // Helper function for formatting price
 const formatPrice = (amount: number): string => {
-  return new Intl.NumberFormat('es-VE', {
+  return new Intl.NumberFormat('es-CO', {
     style: 'currency',
-    currency: 'COP'
+    currency: 'COP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   }).format(amount)
 }
 
@@ -42,7 +46,9 @@ export const useCartStore = defineStore('cart', {
     
     subtotal(state): number {
       return state.items.reduce((acc: number, item: CartItem) => {
-        const optionsTotal = item.selectedOptions.reduce((sum: number, opt: CartItemOption) => sum + opt.priceModifier, 0)
+        const optionsTotal = item.selectedOptions.reduce((sum: number, opt: CartItemOption) => 
+          sum + (opt.priceModifier * opt.quantity), 0
+        )
         return acc + (item.basePrice + optionsTotal) * item.quantity
       }, 0)
     },
@@ -68,8 +74,8 @@ export const useCartStore = defineStore('cart', {
     addItem(item: Omit<CartItem, 'id' | 'quantity'>) {
       const existingIndex = this.items.findIndex((existing: CartItem) => 
         existing.productId === item.productId &&
-        JSON.stringify(existing.selectedOptions.map((o: CartItemOption) => o.id).sort()) === 
-        JSON.stringify(item.selectedOptions.map((o: CartItemOption) => o.id).sort())
+        JSON.stringify(existing.selectedOptions.map((o: CartItemOption) => `${o.id}:${o.quantity}`).sort()) === 
+        JSON.stringify(item.selectedOptions.map((o: CartItemOption) => `${o.id}:${o.quantity}`).sort())
       )
 
       if (existingIndex !== -1) {
@@ -84,8 +90,11 @@ export const useCartStore = defineStore('cart', {
           quantity: 1
         })
       }
-      
-      this.openDrawer()
+    },
+
+    addItemWithToast(item: Omit<CartItem, 'id' | 'quantity'>) {
+      this.addItem(item)
+      // Toast will be called from component using vue-sonner
     },
 
     removeItem(itemId: string) {
@@ -139,5 +148,10 @@ export const useCartStore = defineStore('cart', {
     toggleDrawer() {
       this.isDrawerOpen = !this.isDrawerOpen
     }
+  },
+
+  persist: {
+    key: 'heat-cart',
+    pick: ['items']
   }
 })

@@ -158,7 +158,7 @@ const submitOrder = async () => {
             type="tel"
             required
             class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none"
-            placeholder="+58 XXX-XXX-XXXX"
+            placeholder="+57 314-368-6786"
           />
         </div>
         

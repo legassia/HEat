@@ -1,5 +1,5 @@
 <script setup lang="ts">
-type ButtonVariant = 'primary' | 'secondary' | 'cyan' | 'ghost'
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'cyan' | 'ghost'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
 interface Props {
@@ -23,8 +23,9 @@ const emit = defineEmits<{
 }>()
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'gradient-orange text-white shadow-gummy hover:shadow-gummy-hover',
+  primary: 'bg-gradient-to-r from-heat-orange to-heat-orange-light text-white shadow-gummy hover:shadow-gummy-hover',
   secondary: 'bg-heat-white text-heat-orange border-2 border-heat-orange hover:bg-heat-orange hover:text-white',
+  outline: 'bg-white text-heat-black border-2 border-heat-orange shadow-[0_0_0_1px_rgba(255,171,64,0.3)] hover:bg-heat-orange/5 hover:border-heat-orange-light',
   cyan: 'bg-heat-cyan text-white shadow-gummy-cyan hover:bg-heat-cyan-dark',
   ghost: 'bg-transparent text-heat-gray-dark hover:bg-heat-gray-soft hover:text-heat-orange'
 }
@@ -36,7 +37,7 @@ const sizeClasses: Record<ButtonSize, string> = {
 }
 
 const classes = computed(() => [
-  'inline-flex items-center justify-center gap-2 font-bold transition-all duration-300 transform gummy-press',
+  'inline-flex items-center justify-center gap-2 font-bold transition-all duration-300 transform cursor-pointer select-none',
   variantClasses[props.variant],
   sizeClasses[props.size],
   {
@@ -74,4 +75,3 @@ const handleClick = (event: MouseEvent) => {
     <span v-if="iconRight && !loading" :class="iconRight" />
   </button>
 </template>
-
