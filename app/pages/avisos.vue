@@ -10,7 +10,7 @@ const announcements = [
     title: 'Horario de Atención',
     icon: 'i-lucide-clock',
     content: [
-      { day: 'Martes - Viernes', hours: '1:00 PM - 11:00 PM' },
+      { day: 'Martes - Viernes', hours: '3:30 PM - 10:00 PM' },
       { day: 'Sábados', hours: '1:00 PM - 10:00 PM' },
     ]
   },

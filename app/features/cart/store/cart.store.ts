@@ -33,6 +33,14 @@ const formatPrice = (amount: number): string => {
   }).format(amount)
 }
 
+// Generate a unique signature for comparing products
+const getOptionsSignature = (options: CartItemOption[]): string => {
+  return options
+    .map(o => `${o.id}:${o.quantity}`)
+    .sort()
+    .join('|')
+}
+
 export const useCartStore = defineStore('cart', {
   state: (): CartState => ({
     items: [],
@@ -72,29 +80,28 @@ export const useCartStore = defineStore('cart', {
 
   actions: {
     addItem(item: Omit<CartItem, 'id' | 'quantity'>) {
+      // Find existing item by category + same options (not by unique productId)
+      const newOptionsSignature = getOptionsSignature(item.selectedOptions)
+      
       const existingIndex = this.items.findIndex((existing: CartItem) => 
-        existing.productId === item.productId &&
-        JSON.stringify(existing.selectedOptions.map((o: CartItemOption) => `${o.id}:${o.quantity}`).sort()) === 
-        JSON.stringify(item.selectedOptions.map((o: CartItemOption) => `${o.id}:${o.quantity}`).sort())
+        existing.category === item.category &&
+        getOptionsSignature(existing.selectedOptions) === newOptionsSignature
       )
 
       if (existingIndex !== -1) {
+        // Increment quantity of existing item
         const existingItem = this.items[existingIndex]
         if (existingItem) {
           existingItem.quantity++
         }
       } else {
+        // Add as new item
         this.items.push({
           ...item,
           id: crypto.randomUUID(),
           quantity: 1
         })
       }
-    },
-
-    addItemWithToast(item: Omit<CartItem, 'id' | 'quantity'>) {
-      this.addItem(item)
-      // Toast will be called from component using vue-sonner
     },
 
     removeItem(itemId: string) {

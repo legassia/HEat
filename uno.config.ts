@@ -12,7 +12,11 @@ export default defineConfig({
     presetUno(),
     presetIcons({
       scale: 1.2,
-      cdn: 'https://esm.sh/'
+      cdn: 'https://esm.sh/',
+      extraProperties: {
+        'display': 'inline-block',
+        'vertical-align': 'middle'
+      }
     }),
     presetWebFonts({
       provider: 'google',
@@ -52,6 +56,20 @@ export default defineConfig({
       'gummy-cyan': '0 8px 32px rgba(0, 217, 255, 0.15)',
       'gummy-soft': '0 4px 16px rgba(0, 0, 0, 0.08)',
       'gummy-inset': 'inset 0 2px 8px rgba(0, 0, 0, 0.06)'
+    },
+    animation: {
+      keyframes: {
+        float: '{0%, 100% { transform: translateY(0px) } 50% { transform: translateY(-10px) }}'
+      },
+      durations: {
+        float: '3s'
+      },
+      timingFns: {
+        float: 'ease-in-out'
+      },
+      counts: {
+        float: 'infinite'
+      }
     }
   },
   shortcuts: {
@@ -65,24 +83,48 @@ export default defineConfig({
     'nav-item-inactive': 'text-heat-gray-dark hover:text-heat-orange hover:bg-heat-orange/5',
     'gradient-orange': 'bg-gradient-to-r from-heat-orange to-heat-orange-light',
     'gradient-cyan': 'bg-gradient-to-r from-heat-cyan to-heat-cyan-dark',
-    'text-gradient': 'bg-clip-text text-transparent bg-gradient-to-r from-heat-orange to-heat-orange-light'
+    'text-gradient': 'bg-clip-text text-transparent bg-gradient-to-r from-heat-orange to-heat-orange-light',
+    'animate-float': 'animate-float'
   },
   safelist: [
+    // Navigation icons
     'i-lucide-home',
     'i-lucide-megaphone',
     'i-lucide-shopping-cart',
     'i-lucide-history',
     'i-lucide-user',
+    // Action icons
     'i-lucide-plus',
     'i-lucide-minus',
     'i-lucide-x',
     'i-lucide-check',
+    'i-lucide-trash-2',
+    // Navigation arrows
     'i-lucide-chevron-left',
     'i-lucide-chevron-right',
+    'i-lucide-chevron-up',
+    'i-lucide-chevron-down',
+    // UI icons
     'i-lucide-menu',
     'i-lucide-phone',
     'i-lucide-clock',
-    'i-lucide-map-pin'
+    'i-lucide-map-pin',
+    'i-lucide-truck',
+    'i-lucide-bike',
+    'i-lucide-search',
+    'i-lucide-settings',
+    'i-lucide-log-out',
+    'i-lucide-edit',
+    'i-lucide-save',
+    // Social / Auth
+    'i-lucide-mail',
+    'i-lucide-lock',
+    'i-lucide-eye',
+    'i-lucide-eye-off',
+    // Status icons
+    'i-lucide-loader-2',
+    'i-lucide-alert-circle',
+    'i-lucide-info',
+    'i-lucide-check-circle'
   ]
 })
-

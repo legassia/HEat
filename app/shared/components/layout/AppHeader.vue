@@ -21,27 +21,28 @@ const cartStore = useCartStore()
       <!-- Search (future feature) -->
       <div class="flex-1 max-w-md mx-8">
         <div class="relative">
+          <span class="i-lucide-search absolute left-4 top-1/2 -translate-y-1/2 text-heat-gray-dark" />
           <input 
             type="search"
             placeholder="Buscar productos..."
-            class="w-full px-5 py-2.5 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none"
+            class="w-full pl-11 pr-5 py-2.5 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none"
           />
         </div>
       </div>
       
       <!-- User Actions -->
-      <div class="flex items-center gap-4">
-        <!-- Cart Button -->
+      <div class="flex items-center gap-3">
+        <!-- Cart Button - Same size as user avatar -->
         <button 
-          class="relative p-3 rounded-gummy bg-heat-gray-soft hover:bg-heat-orange/10 transition-colors gummy-press"
+          class="relative w-10 h-10 rounded-full bg-heat-gray-soft hover:bg-heat-orange/10 transition-colors flex items-center justify-center"
           aria-label="Ver carrito"
           @click="cartStore.openDrawer()"
         >
-          <span class="i-lucide-shopping-cart text-xl text-heat-gray-dark" />
+          <span class="i-lucide-shopping-cart text-lg text-heat-gray-dark" />
           <!-- Badge -->
           <span 
             v-if="cartStore.itemCount > 0"
-            class="absolute -top-1 -right-1 w-5 h-5 rounded-full gradient-orange text-white text-xs font-bold flex items-center justify-center"
+            class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full gradient-orange text-white text-[10px] font-bold flex items-center justify-center"
           >
             {{ cartStore.itemCount > 99 ? '99+' : cartStore.itemCount }}
           </span>
@@ -50,7 +51,7 @@ const cartStore = useCartStore()
         <!-- User Avatar -->
         <NuxtLink 
           to="/perfil"
-          class="w-10 h-10 rounded-full bg-heat-cyan overflow-hidden border-2 border-heat-cyan shadow-gummy-cyan gummy-press"
+          class="w-10 h-10 rounded-full bg-heat-cyan overflow-hidden border-2 border-heat-cyan shadow-gummy-cyan"
         >
           <img 
             v-if="user?.user_metadata?.avatar_url"
@@ -66,4 +67,3 @@ const cartStore = useCartStore()
     </div>
   </header>
 </template>
-

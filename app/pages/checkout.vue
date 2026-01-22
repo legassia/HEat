@@ -9,7 +9,7 @@ useHead({
   title: 'HEat - Confirmar Pedido'
 })
 
-const supabase = useSupabaseClient()
+const supabase = useSupabaseClient<any>()
 const user = useSupabaseUser()
 const cartStore = useCartStore()
 const router = useRouter()
@@ -58,7 +58,7 @@ const submitOrder = async () => {
       product_id: item.productId,
       quantity: item.quantity,
       selected_options: item.selectedOptions,
-      subtotal: (item.basePrice + item.selectedOptions.reduce((sum, opt) => sum + opt.priceModifier, 0)) * item.quantity
+      subtotal: (item.basePrice + item.selectedOptions.reduce((sum: number, opt) => sum + opt.priceModifier, 0)) * item.quantity
     }))
 
     const { error: itemsError } = await supabase
@@ -206,4 +206,3 @@ const submitOrder = async () => {
     </p>
   </div>
 </template>
-

@@ -66,7 +66,7 @@ const contactInfo = [
       <!-- Bottom -->
       <div class="mt-12 pt-6 border-t border-heat-gray-medium/30 flex flex-col md:flex-row items-center justify-between gap-4">
         <p class="text-heat-gray-dark text-sm">
-          © {{ currentYear }} HEat. Todos los derechos reservados.
+          © {{ currentYear }} ArePaisas. Todos los derechos reservados.
         </p>
         <div class="flex gap-6 text-sm">
           <NuxtLink to="/terminos" class="text-heat-gray-dark hover:text-heat-orange transition-colors">

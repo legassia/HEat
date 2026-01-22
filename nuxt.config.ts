@@ -33,7 +33,8 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/auth',
       callback: '/confirm',
-      exclude: ['/', '/avisos']
+      // Exclude all routes from auth redirect for testing
+      exclude: ['/', '/avisos', '/carrito', '/historial', '/perfil', '/checkout', '/**']
     }
   },
 

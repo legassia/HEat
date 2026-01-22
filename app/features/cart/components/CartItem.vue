@@ -83,12 +83,13 @@ const optionsText = computed(() => {
       </div>
     </div>
     
-    <!-- Remove Button -->
+    <!-- Remove Button - Now styled red with visible X -->
     <button 
-      class="self-start p-1.5 rounded-full hover:bg-red-50 text-heat-gray-medium hover:text-red-500 transition-colors"
+      class="self-start w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-400 hover:bg-red-100 hover:text-red-600 transition-colors"
       @click="cartStore.removeItem(item.id)"
+      aria-label="Eliminar del carrito"
     >
-      <span class="i-lucide-x text-base" />
+      <span class="i-lucide-x text-lg" />
     </button>
   </div>
 </template>
