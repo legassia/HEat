@@ -40,7 +40,7 @@ const toggleActive = () => {
 
 const formattedPrice = computed(() => {
   if (props.price === 0) return ''
-  return `+$${props.price.toFixed(2)}`
+  return `+$${props.price.toFixed(0)}`
 })
 </script>
 
@@ -50,7 +50,7 @@ const formattedPrice = computed(() => {
     :class="[
       isActive 
         ? 'border-heat-orange bg-heat-orange/10' 
-        : 'border-heat-gray-medium/40 bg-white hover:border-heat-orange/50',
+        : 'border-heat-gray-medium/40 bg-white hover:border-heat-orange/50 shadow-[0_0_0_2px_rgba(255,107,53,0.15)]',
       disabled ? 'opacity-50 cursor-not-allowed' : ''
     ]"
     @click="toggleActive"
@@ -71,9 +71,9 @@ const formattedPrice = computed(() => {
       >
         {{ name }}
       </span>
-      <!-- <span v-if="formattedPrice" class="text-xs text-heat-gray-dark">
+      <span v-if="formattedPrice && !isActive" class="text-xs text-heat-gray-dark">
         {{ formattedPrice }}
-      </span> -->
+      </span>
     </div>
     
     <!-- Controls (show when active) -->
@@ -83,7 +83,7 @@ const formattedPrice = computed(() => {
       @click.stop
     >
       <button 
-        class="w-7 h-7 rounded-full bg-heat-gray-soft flex items-center justify-center hover:bg-heat-orange/20 transition-colors"
+        class="w-7 h-7 rounded-full bg-white border border-heat-gray-medium/50 flex items-center justify-center hover:bg-heat-orange/10 hover:border-heat-orange transition-colors"
         :disabled="count <= 0 || disabled"
         @click="decrement"
       >
@@ -99,4 +99,3 @@ const formattedPrice = computed(() => {
     </div>
   </div>
 </template>
-

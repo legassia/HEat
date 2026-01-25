@@ -1,8 +1,6 @@
 -- HEat Database Schema
 -- Run this in your Supabase SQL Editor
-
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Using gen_random_uuid() which is native to PostgreSQL 13+
 
 -- ============================================
 -- PROFILES TABLE
@@ -37,7 +35,7 @@ CREATE POLICY "Users can insert own profile"
 -- PRODUCTS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS products (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   category TEXT NOT NULL CHECK (category IN ('arepas', 'perros', 'hamburguesas')),
   base_price DECIMAL(10, 2) NOT NULL,
@@ -61,7 +59,7 @@ CREATE POLICY "Anyone can view products"
 -- PRODUCT OPTIONS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS product_options (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   product_id UUID REFERENCES products(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   option_group TEXT NOT NULL, -- 'proteina', 'extra', 'topping', 'salsa', 'vegetal'
@@ -83,7 +81,7 @@ CREATE POLICY "Anyone can view product options"
 -- ORDERS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS orders (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   plate_code TEXT NOT NULL, -- K01, K02, etc.
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'cooking', 'ready', 'delivered', 'cancelled')),
@@ -108,7 +106,7 @@ CREATE POLICY "Users can create orders"
 -- ORDER ITEMS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS order_items (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
   product_id UUID REFERENCES products(id) ON DELETE SET NULL,
   quantity INTEGER NOT NULL DEFAULT 1,

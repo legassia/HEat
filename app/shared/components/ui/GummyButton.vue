@@ -28,7 +28,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   // Secondary: white bg with orange border
   secondary: 'bg-heat-white text-heat-orange border-2 border-heat-orange hover:bg-heat-orange hover:text-white',
   // Outline: white bg with subtle orange border (softer than secondary)
-  outline: 'bg-white text-heat-black border border-heat-orange/40 hover:border-heat-orange hover:bg-heat-orange/5',
+  outline: 'bg-white text-heat-black border border-heat-orange/20 hover:border-heat-orange/50 hover:bg-heat-orange/5',
   // Cyan variant
   cyan: 'bg-heat-cyan text-white shadow-gummy-cyan hover:bg-heat-cyan-dark',
   // Ghost: no background

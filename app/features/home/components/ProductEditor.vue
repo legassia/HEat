@@ -77,13 +77,26 @@ const formatBadge = (ingredient: { name: string; count: number }) => {
   return `${ingredient.count}x ${ingredient.name}`
 }
 
+// Responsive radius for mobile vs desktop
+const isMobile = ref(false)
+
+onMounted(() => {
+  const checkMobile = () => {
+    isMobile.value = window.innerWidth < 1024
+  }
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  onUnmounted(() => window.removeEventListener('resize', checkMobile))
+})
+
 // Position emojis in a circle around the product
 const getEmojiPosition = (index: number, total: number) => {
-  // Distribute emojis in a tighter circle, shifted left
+  // Distribute emojis in a tighter circle
   const angle = (index / Math.max(total, 1)) * 2 * Math.PI - Math.PI / 2
-  const radius = 75 // pixels from center - tighter
-  const x = 2 * Math.cos(angle) * radius - 12
-  const y = Math.sin(angle) * radius - 12
+  // Mobile: 40px, Desktop: 75px
+  const radius = isMobile.value ? 40 : 75
+  const x = 2 * Math.cos(angle) * radius - 10
+  const y = Math.sin(angle) * radius - (isMobile.value ? 18 : 24)
   return {
     transform: `translate(${x}px, ${y}px)`
   }
@@ -142,7 +155,7 @@ const getEmojiPosition = (index: number, total: number) => {
       </div>
       
       <!-- Product Visualizer - Taller with centered product -->
-      <div class="bg-gradient-to-br from-heat-gray-soft/80 to-white rounded-gummy-lg mb-6 relative overflow-hidden min-h-[320px] lg:min-h-[360px] flex flex-col">
+      <div class="bg-gradient-to-br from-heat-gray-soft/80 to-white rounded-gummy-lg mb-6 relative overflow-hidden min-h-[280px] lg:min-h-[360px] flex flex-col">
         <!-- Product Name (Top) -->
         <div class="text-center pt-6 relative z-10">
           <h4 class="text-xl font-bold text-heat-black">{{ productName }}</h4>
@@ -159,7 +172,7 @@ const getEmojiPosition = (index: number, total: number) => {
           <!-- Center container for product + floating emojis -->
           <div class="relative">
             <!-- Main product emoji (centered) -->
-            <div class="text-[100px] lg:text-[120px] leading-none select-none">
+            <div class="text-[80px] lg:text-[120px] leading-none select-none">
               {{ category?.emoji }}
             </div>
             
@@ -167,7 +180,7 @@ const getEmojiPosition = (index: number, total: number) => {
             <div 
               v-for="(ingredient, idx) in selectedIngredients.slice(0, 8)"
               :key="ingredient.id"
-              class="absolute text-2xl lg:text-3xl transition-all duration-500 ease-out z-10"
+              class="absolute text-xl lg:text-3xl transition-all duration-500 ease-out z-10"
               :style="{
                 top: '50%',
                 left: '50%',
@@ -182,7 +195,7 @@ const getEmojiPosition = (index: number, total: number) => {
               <!-- Count badge if > 1 -->
               <span 
                 v-if="ingredient.count > 1"
-                class="absolute -bottom-1 -right-1 w-5 h-5 bg-heat-orange text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm"
+                class="absolute -bottom-1 -right-1 w-4 h-4 lg:w-5 lg:h-5 bg-heat-orange text-white text-[8px] lg:text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm"
               >
                 {{ ingredient.count }}
               </span>
@@ -191,12 +204,12 @@ const getEmojiPosition = (index: number, total: number) => {
         </div>
         
         <!-- Ingredient Tags (below product) -->
-        <div v-if="selectedIngredients.length > 0" class="px-6 pb-3">
-          <div class="flex flex-wrap gap-2 justify-center">
+        <div v-if="selectedIngredients.length > 0" class="px-4 lg:px-6 pb-3">
+          <div class="flex flex-wrap gap-1 lg:gap-2 justify-center">
             <span 
               v-for="ing in selectedIngredients"
               :key="ing.id"
-              class="px-2 py-0.5 bg-heat-orange/10 text-heat-orange text-xs rounded-full font-medium"
+              class="px-2 py-0.5 bg-heat-orange/10 text-heat-orange text-[10px] lg:text-xs rounded-full font-medium"
             >
               {{ formatBadge(ing) }}
             </span>
@@ -205,7 +218,7 @@ const getEmojiPosition = (index: number, total: number) => {
         
         <!-- Price (Bottom - Grayish color) -->
         <div class="text-center pb-6 relative z-10">
-          <p class="text-2xl font-bold text-heat-gray-dark/70">{{ formattedPrice }}</p>
+          <p class="text-xl lg:text-2xl font-bold text-heat-gray-dark/70">{{ formattedPrice }}</p>
         </div>
       </div>
       

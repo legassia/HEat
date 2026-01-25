@@ -15,7 +15,7 @@ const isExpanded = ref(false)
 
 <template>
   <aside 
-    class="fixed top-0 left-0 h-screen bg-heat-white z-50 border-r border-heat-gray-medium/30 transition-all duration-300 flex flex-col"
+    class="hidden lg:flex fixed top-0 left-0 h-screen bg-heat-white z-40 border-r border-heat-gray-medium/30 transition-all duration-300 flex-col"
     :class="isExpanded ? 'w-[var(--sidenav-width-expanded)]' : 'w-[var(--sidenav-width)]'"
     @mouseenter="isExpanded = true"
     @mouseleave="isExpanded = false"

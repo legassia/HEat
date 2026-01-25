@@ -1,18 +1,29 @@
 <script setup lang="ts">
 import OrderCard from '~/features/orders/components/OrderCard.vue'
 
+type OrderStatus = 'pending' | 'cooking' | 'ready' | 'delivered' | 'cancelled'
+
+interface Order {
+  id: string
+  plateCode: string
+  status: OrderStatus
+  createdAt: Date
+  total: number
+  items: Array<{ name: string; quantity: number }>
+}
+
 useHead({
   title: 'HEat - Historial de Pedidos'
 })
 
 // Mock orders for now - will be replaced with real data from Supabase
-const orders = ref([
+const orders = ref<Order[]>([
   {
     id: '1',
     plateCode: 'K12',
     status: 'delivered',
     createdAt: new Date('2026-01-21T14:30:00'),
-    total: 12.50,
+    total: 12500,
     items: [
       { name: 'Arepa con Queso y Jamón', quantity: 2 },
       { name: 'Perro con Todo', quantity: 1 }
@@ -23,7 +34,7 @@ const orders = ref([
     plateCode: 'K08',
     status: 'cooking',
     createdAt: new Date('2026-01-21T13:15:00'),
-    total: 8.00,
+    total: 8000,
     items: [
       { name: 'Hamburguesa Especial', quantity: 2 }
     ]
@@ -33,7 +44,7 @@ const orders = ref([
     plateCode: 'K03',
     status: 'ready',
     createdAt: new Date('2026-01-21T12:00:00'),
-    total: 15.75,
+    total: 15750,
     items: [
       { name: 'Arepa Mixta', quantity: 3 },
       { name: 'Perro Sencillo', quantity: 2 }

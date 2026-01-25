@@ -5,13 +5,13 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <section class="relative overflow-hidden rounded-gummy-xl bg-heat-white p-8 lg:p-12 border border-heat-gray-medium/30">
-    <!-- Floating food icons -->
-    <div class="absolute top-8 right-[40%] text-9xl animate-float" style="animation-delay: 0s">🍔</div>
-    <div class="absolute top-16 right-[25%] text-6xl animate-float" style="animation-delay: 0.5s">🥓</div>
-    <div class="absolute top-50 right-[15%] text-9xl animate-float" style="animation-delay: 1s">🫓</div>
-    <div class="absolute bottom-20 right-[24%] text-7xl animate-float" style="animation-delay: 1.5s">🍢</div>
-    <div class="absolute bottom-8 right-[40%] text-8xl animate-float" style="animation-delay: 0.3s">🌭</div>
+  <section class="relative overflow-hidden rounded-gummy-xl bg-heat-white p-6 lg:p-12 border border-heat-gray-medium/30 min-h-[400px] lg:min-h-0">
+    <!-- Floating food icons - hidden on small mobile, responsive sizes -->
+    <div class="hidden sm:block absolute top-4 lg:top-8 right-[30%] lg:right-[40%] text-5xl lg:text-9xl animate-float" style="animation-delay: 0s">🍔</div>
+    <div class="hidden md:block absolute top-12 lg:top-16 right-[15%] lg:right-[25%] text-4xl lg:text-6xl animate-float" style="animation-delay: 0.5s">🥓</div>
+    <div class="hidden sm:block absolute top-32 lg:top-50 right-[10%] lg:right-[15%] text-5xl lg:text-9xl animate-float" style="animation-delay: 1s">🫓</div>
+    <div class="hidden md:block absolute bottom-16 lg:bottom-20 right-[18%] lg:right-[24%] text-4xl lg:text-7xl animate-float" style="animation-delay: 1.5s">🍢</div>
+    <div class="hidden sm:block absolute bottom-4 lg:bottom-8 right-[30%] lg:right-[40%] text-5xl lg:text-8xl animate-float" style="animation-delay: 0.3s">🌭</div>
     
     <div class="relative z-10 max-w-xl">
       <!-- Badge -->

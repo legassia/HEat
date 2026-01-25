@@ -125,6 +125,15 @@ export default defineConfig({
     'i-lucide-loader-2',
     'i-lucide-alert-circle',
     'i-lucide-info',
-    'i-lucide-check-circle'
+    'i-lucide-check-circle',
+    // TTS & Orders
+    'i-lucide-volume-2',
+    'i-lucide-square',
+    'i-lucide-copy',
+    'i-lucide-clipboard-list',
+    'i-lucide-alert-triangle',
+    'i-lucide-flame',
+    'i-lucide-package-check',
+    'i-lucide-x-circle'
   ]
 })

@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import { useSpeech } from '../composables/useSpeech'
+import { useUserRole } from '~/features/auth/composables/useUserRole'
+
 interface OrderItem {
   name: string
   quantity: number
+  selectedOptions?: Array<{ name: string; quantity: number }>
 }
 
 interface Order {
@@ -16,6 +20,9 @@ interface Order {
 const props = defineProps<{
   order: Order
 }>()
+
+const { isAdmin } = useUserRole()
+const { speakOrder, isSpeaking, stop, speechRate, cycleRate } = useSpeech()
 
 const statusConfig = {
   pending: {
@@ -48,7 +55,7 @@ const statusConfig = {
 const currentStatus = computed(() => statusConfig[props.order.status])
 
 const formattedDate = computed(() => {
-  return new Intl.DateTimeFormat('es-VE', {
+  return new Intl.DateTimeFormat('es-CO', {
     day: 'numeric',
     month: 'short',
     hour: '2-digit',
@@ -57,15 +64,49 @@ const formattedDate = computed(() => {
 })
 
 const formattedTotal = computed(() => {
-  return new Intl.NumberFormat('es-VE', {
+  return new Intl.NumberFormat('es-CO', {
     style: 'currency',
-    currency: 'COP'
+    currency: 'COP',
+    minimumFractionDigits: 0
   }).format(props.order.total)
 })
 
 const isActive = computed(() => 
   ['pending', 'cooking', 'ready'].includes(props.order.status)
 )
+
+// Play order narration
+const playOrder = () => {
+  if (isSpeaking.value) {
+    stop()
+  } else {
+    speakOrder({
+      plate_code: props.order.plateCode,
+      items: props.order.items.map(item => ({
+        productName: item.name,
+        quantity: item.quantity,
+        selectedOptions: item.selectedOptions
+      })),
+      total: props.order.total
+    })
+  }
+}
+
+// Copy order to clipboard
+const copyOrder = async () => {
+  const lines = [
+    `Pedido #${props.order.plateCode}`,
+    ...props.order.items.map(item => `- ${item.name} x${item.quantity}`),
+    `Total: ${formattedTotal.value}`
+  ]
+  
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'))
+    // Could add toast here
+  } catch (e) {
+    console.error('Failed to copy:', e)
+  }
+}
 </script>
 
 <template>
@@ -130,6 +171,40 @@ const isActive = computed(() =>
       </span>
     </div>
     
+    <!-- Admin Controls (TTS & Copy) -->
+    <div 
+      v-if="isAdmin || true"
+      class="mt-4 pt-4 border-t border-heat-gray-medium/30 flex items-center gap-2"
+    >
+      <!-- Play/Stop Button -->
+      <button 
+        class="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 rounded-gummy-sm text-sm font-medium transition-colors"
+        :class="isSpeaking ? 'bg-heat-orange text-white' : 'bg-heat-gray-soft text-heat-gray-dark hover:bg-heat-orange/10 hover:text-heat-orange'"
+        @click="playOrder"
+      >
+        <span :class="isSpeaking ? 'i-lucide-square' : 'i-lucide-volume-2'" />
+        {{ isSpeaking ? 'Detener' : 'Narrar' }}
+      </button>
+      
+      <!-- Speed Control -->
+      <button 
+        v-if="isSpeaking"
+        class="px-3 py-2.5 rounded-gummy-sm bg-heat-gray-soft text-heat-gray-dark text-sm font-medium hover:bg-heat-orange/10"
+        @click="cycleRate"
+      >
+        {{ speechRate }}x
+      </button>
+      
+      <!-- Copy Button -->
+      <button 
+        class="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 rounded-gummy-sm bg-heat-gray-soft text-heat-gray-dark text-sm font-medium hover:bg-heat-cyan/10 hover:text-heat-cyan transition-colors"
+        @click="copyOrder"
+      >
+        <span class="i-lucide-copy" />
+        Copiar
+      </button>
+    </div>
+    
     <!-- Progress bar for active orders -->
     <div 
       v-if="isActive"
@@ -165,4 +240,3 @@ const isActive = computed(() =>
     </div>
   </GummyCard>
 </template>
-
