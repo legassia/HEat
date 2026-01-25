@@ -71,9 +71,9 @@ const formattedPrice = computed(() => {
       >
         {{ name }}
       </span>
-      <span v-if="formattedPrice" class="text-xs text-heat-gray-dark">
+      <!-- <span v-if="formattedPrice" class="text-xs text-heat-gray-dark">
         {{ formattedPrice }}
-      </span>
+      </span> -->
     </div>
     
     <!-- Controls (show when active) -->

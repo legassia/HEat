@@ -30,7 +30,8 @@ const emit = defineEmits<{
       
       <!-- Description -->
       <p class="text-heat-gray-dark text-lg mb-8 leading-relaxed">
-        Arepas, perros y hamburguesas hechos con amor. 
+        Arepas, chorizos y hamburguesas hechos con amor. 
+        <br>
         Personaliza tu pedido y recíbelo calentito en minutos.
       </p>
       
@@ -51,7 +52,7 @@ const emit = defineEmits<{
           <span class="w-8 h-8 rounded-full bg-heat-cyan/10 flex items-center justify-center">
             <span class="i-lucide-clock text-heat-cyan" />
           </span>
-          <span>15-30 min</span>
+          <span>5-15 min</span>
         </div>
         <div class="flex items-center gap-2">
           <span class="w-8 h-8 rounded-full bg-heat-orange/10 flex items-center justify-center">

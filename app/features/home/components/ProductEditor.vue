@@ -39,16 +39,19 @@ const ingredientEmojis: Record<string, string> = {
   'queso-ch': '🧀',
   'pollo-pi': '🍗',
   'res-pi': '🥩',
-  'cerdo-pi': '🥩',
+  'cerdo-pi': '🐷',
+  'pincho-p': '🍢',
+  'torta-c': '🥩',
   // Extras
+  mantequilla: '🧈',
+  sal: '🧂',
   aguacate: '🥑',
-  huevo: '🍳',
+  huevo: '🥚',
   tocineta: '🥓',
   maiz: '🌽',
   cebolla: '🧅',
   papitas: '🍟',
-  salsas: '🫙',
-  repollo: '🥬',
+  salsas: '🥫',
   lechuga: '🥬',
   tomate: '🍅',
   'huevo-h': '🍳',
@@ -58,7 +61,8 @@ const ingredientEmojis: Record<string, string> = {
   guacamole: '🥑',
   'arepa-pi': '🫓',
   'papas-pi': '🍟',
-  ensalada: '🥗'
+  ensalada: '🥗',
+  crudo: '☁️'
 }
 
 // Get emoji for ingredient
