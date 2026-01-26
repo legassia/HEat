@@ -150,7 +150,7 @@ const saveProfile = async () => {
               :disabled="!isEditing"
               rows="3"
               class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60 resize-none"
-              placeholder="Tu dirección"
+              placeholder="Añada tu dirección para poder recibir domicilios en el sector!"
             />
           </div>
           

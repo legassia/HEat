@@ -27,7 +27,7 @@ export function useOrderHistory() {
   const error = ref<string | null>(null)
 
   const fetchOrders = async () => {
-    if (!user.value) {
+    if (!user.value?.id) {
       orders.value = []
       return
     }
@@ -64,7 +64,7 @@ export function useOrderHistory() {
   }
 
   const subscribeToUpdates = () => {
-    if (!user.value) return null
+    if (!user.value?.id) return null
 
     const channel = supabase
       .channel('order-updates')

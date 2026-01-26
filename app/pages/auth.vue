@@ -14,12 +14,39 @@ const router = useRouter()
 const mode = computed(() => route.query.mode === 'register' ? 'register' : 'login')
 const isLoading = ref(false)
 const error = ref('')
+const successMessage = ref('')
+
+// Auth method: 'email' | 'phone'
+const authMethod = ref<'email' | 'phone'>('email')
+
+// Email auth
+const email = ref('')
+const password = ref('')
+const name = ref('')
+const showPassword = ref(false)
 
 // Phone auth
-const phone = ref('')
+const countryCode = ref('+57')
+const phoneNumber = ref('')
 const otp = ref('')
 const showOtpInput = ref(false)
 
+// Country codes for selector
+const countryCodes = [
+  { code: '+57', flag: '🇨🇴', name: 'Colombia' },
+  { code: '+58', flag: '🇻🇪', name: 'Venezuela' },
+  { code: '+52', flag: '🇲🇽', name: 'México' },
+  { code: '+1', flag: '🇺🇸', name: 'USA' },
+  { code: '+34', flag: '🇪🇸', name: 'España' },
+  { code: '+51', flag: '🇵🇪', name: 'Perú' },
+  { code: '+54', flag: '🇦🇷', name: 'Argentina' },
+  { code: '+56', flag: '🇨🇱', name: 'Chile' }
+]
+
+// Full phone number
+const fullPhone = computed(() => `${countryCode.value}${phoneNumber.value.replace(/\D/g, '')}`)
+
+// Google Sign In
 const signInWithGoogle = async () => {
   isLoading.value = true
   error.value = ''
@@ -40,8 +67,68 @@ const signInWithGoogle = async () => {
   }
 }
 
+// Email Sign In
+const signInWithEmail = async () => {
+  if (!email.value || !password.value) {
+    error.value = 'Completa todos los campos'
+    return
+  }
+  
+  isLoading.value = true
+  error.value = ''
+  
+  try {
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: email.value,
+      password: password.value
+    })
+    
+    if (authError) throw authError
+    router.push('/')
+  } catch (e: any) {
+    error.value = e.message || 'Credenciales inválidas'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Email Sign Up
+const signUpWithEmail = async () => {
+  if (!email.value || !password.value) {
+    error.value = 'Completa todos los campos'
+    return
+  }
+  
+  if (password.value.length < 6) {
+    error.value = 'La contraseña debe tener al menos 6 caracteres'
+    return
+  }
+  
+  isLoading.value = true
+  error.value = ''
+  
+  try {
+    const { error: authError } = await supabase.auth.signUp({
+      email: email.value,
+      password: password.value,
+      options: {
+        data: { full_name: name.value },
+        emailRedirectTo: `${window.location.origin}/confirm`
+      }
+    })
+    
+    if (authError) throw authError
+    successMessage.value = 'Revisa tu correo para confirmar tu cuenta'
+  } catch (e: any) {
+    error.value = e.message || 'Error al crear cuenta'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Phone OTP
 const sendOtp = async () => {
-  if (!phone.value) {
+  if (!phoneNumber.value) {
     error.value = 'Ingresa tu número de teléfono'
     return
   }
@@ -51,7 +138,7 @@ const sendOtp = async () => {
   
   try {
     const { error: authError } = await supabase.auth.signInWithOtp({
-      phone: phone.value
+      phone: fullPhone.value
     })
     
     if (authError) throw authError
@@ -74,7 +161,7 @@ const verifyOtp = async () => {
   
   try {
     const { error: authError } = await supabase.auth.verifyOtp({
-      phone: phone.value,
+      phone: fullPhone.value,
       token: otp.value,
       type: 'sms'
     })
@@ -85,6 +172,23 @@ const verifyOtp = async () => {
     error.value = e.message || 'Código inválido'
   } finally {
     isLoading.value = false
+  }
+}
+
+// Handle form submission
+const handleSubmit = () => {
+  if (authMethod.value === 'email') {
+    if (mode.value === 'register') {
+      signUpWithEmail()
+    } else {
+      signInWithEmail()
+    }
+  } else {
+    if (showOtpInput.value) {
+      verifyOtp()
+    } else {
+      sendOtp()
+    }
   }
 }
 </script>
@@ -107,6 +211,15 @@ const verifyOtp = async () => {
       
       <!-- Card -->
       <GummyCard padding="lg">
+        <!-- Success Message -->
+        <div 
+          v-if="successMessage"
+          class="mb-4 p-3 rounded-gummy-sm bg-green-50 text-green-600 text-sm flex items-center gap-2"
+        >
+          <span class="i-lucide-check-circle" />
+          {{ successMessage }}
+        </div>
+        
         <!-- Error Message -->
         <div 
           v-if="error"
@@ -118,7 +231,7 @@ const verifyOtp = async () => {
         
         <!-- Google Sign In -->
         <button 
-          class="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-gummy bg-white border border-heat-gray-medium hover:bg-heat-gray-soft transition-colors gummy-press"
+          class="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-gummy bg-white border border-heat-gray-medium hover:bg-heat-gray-soft transition-colors"
           :disabled="isLoading"
           @click="signInWithGoogle"
         >
@@ -140,20 +253,119 @@ const verifyOtp = async () => {
           <div class="flex-1 h-px bg-heat-gray-medium/50" />
         </div>
         
-        <!-- Phone Auth -->
-        <form @submit.prevent="showOtpInput ? verifyOtp() : sendOtp()">
+        <!-- Auth Method Tabs -->
+        <div class="flex mb-6 bg-heat-gray-soft rounded-gummy-sm p-1">
+          <button
+            class="flex-1 py-2 px-4 rounded-gummy-sm text-sm font-semibold transition-all"
+            :class="authMethod === 'email' ? 'bg-white shadow-sm text-heat-orange' : 'text-heat-gray-dark'"
+            @click="authMethod = 'email'; showOtpInput = false"
+          >
+            <span class="i-lucide-mail mr-1" />
+            Correo
+          </button>
+          <button
+            class="flex-1 py-2 px-4 rounded-gummy-sm text-sm font-semibold transition-all"
+            :class="authMethod === 'phone' ? 'bg-white shadow-sm text-heat-orange' : 'text-heat-gray-dark'"
+            @click="authMethod = 'phone'"
+          >
+            <span class="i-lucide-phone mr-1" />
+            Teléfono
+          </button>
+        </div>
+        
+        <!-- Email Auth Form -->
+        <form v-if="authMethod === 'email'" @submit.prevent="handleSubmit">
+          <div class="space-y-4">
+            <!-- Name (only for register) -->
+            <div v-if="mode === 'register'">
+              <label class="block text-sm font-semibold text-heat-black mb-2">
+                Nombre
+              </label>
+              <input 
+                v-model="name"
+                type="text"
+                :disabled="isLoading"
+                class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
+                placeholder="Tu nombre"
+              />
+            </div>
+            
+            <!-- Email -->
+            <div>
+              <label class="block text-sm font-semibold text-heat-black mb-2">
+                Correo electrónico
+              </label>
+              <input 
+                v-model="email"
+                type="email"
+                :disabled="isLoading"
+                class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
+                placeholder="tu@correo.com"
+              />
+            </div>
+            
+            <!-- Password -->
+            <div>
+              <label class="block text-sm font-semibold text-heat-black mb-2">
+                Contraseña
+              </label>
+              <div class="relative">
+                <input 
+                  v-model="password"
+                  :type="showPassword ? 'text' : 'password'"
+                  :disabled="isLoading"
+                  class="w-full px-4 py-3 pr-12 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-heat-gray-dark hover:text-heat-orange"
+                  @click="showPassword = !showPassword"
+                >
+                  <span :class="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'" />
+                </button>
+              </div>
+            </div>
+            
+            <GummyButton 
+              type="submit"
+              variant="primary"
+              class="w-full"
+              :loading="isLoading"
+            >
+              {{ mode === 'register' ? 'Crear Cuenta' : 'Iniciar Sesión' }}
+            </GummyButton>
+          </div>
+        </form>
+        
+        <!-- Phone Auth Form -->
+        <form v-else @submit.prevent="handleSubmit">
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-semibold text-heat-black mb-2">
                 Número de teléfono
               </label>
-              <input 
-                v-model="phone"
-                type="tel"
-                :disabled="showOtpInput || isLoading"
-                class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
-                placeholder="+57 314-368-6786"
-              />
+              <div class="flex gap-2">
+                <!-- Country Code Selector -->
+                <select
+                  v-model="countryCode"
+                  :disabled="showOtpInput || isLoading"
+                  class="px-3 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60 text-sm font-medium"
+                >
+                  <option v-for="c in countryCodes" :key="c.code" :value="c.code">
+                    {{ c.flag }} {{ c.code }}
+                  </option>
+                </select>
+                
+                <!-- Phone Number -->
+                <input 
+                  v-model="phoneNumber"
+                  type="tel"
+                  :disabled="showOtpInput || isLoading"
+                  class="flex-1 px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
+                  placeholder="314 368 6786"
+                />
+              </div>
             </div>
             
             <!-- OTP Input -->
@@ -171,7 +383,7 @@ const verifyOtp = async () => {
                 placeholder="000000"
               />
               <p class="text-xs text-heat-gray-dark mt-2 text-center">
-                Enviamos un código a {{ phone }}
+                Enviamos un código a {{ fullPhone }}
               </p>
             </div>
             
@@ -217,4 +429,3 @@ const verifyOtp = async () => {
     </div>
   </div>
 </template>
-

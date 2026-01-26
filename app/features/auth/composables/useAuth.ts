@@ -9,6 +9,9 @@ export function useAuth() {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
+  // ============================================
+  // Google OAuth
+  // ============================================
   const signInWithGoogle = async () => {
     isLoading.value = true
     error.value = null
@@ -30,6 +33,58 @@ export function useAuth() {
     }
   }
 
+  // ============================================
+  // Email/Password Auth
+  // ============================================
+  const signInWithEmail = async (email: string, password: string) => {
+    isLoading.value = true
+    error.value = null
+    
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+      
+      if (authError) throw authError
+      return true
+    } catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Credenciales inválidas'
+      throw e
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const signUpWithEmail = async (email: string, password: string, name?: string) => {
+    isLoading.value = true
+    error.value = null
+    
+    try {
+      const { error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name
+          },
+          emailRedirectTo: `${window.location.origin}/confirm`
+        }
+      })
+      
+      if (authError) throw authError
+      return true
+    } catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Error al crear cuenta'
+      throw e
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // ============================================
+  // Phone Auth
+  // ============================================
   const signInWithPhone = async (phone: string) => {
     isLoading.value = true
     error.value = null
@@ -66,6 +121,9 @@ export function useAuth() {
     }
   }
 
+  // ============================================
+  // Sign Out
+  // ============================================
   const signOut = async () => {
     isLoading.value = true
     error.value = null
@@ -81,14 +139,42 @@ export function useAuth() {
     }
   }
 
+  // ============================================
+  // Password Reset
+  // ============================================
+  const resetPassword = async (email: string) => {
+    isLoading.value = true
+    error.value = null
+    
+    try {
+      const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?mode=reset`
+      })
+      if (authError) throw authError
+      return true
+    } catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Error al enviar correo'
+      throw e
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   return {
     user,
     isAuthenticated,
     isLoading: readonly(isLoading),
     error: readonly(error),
+    // Google
     signInWithGoogle,
+    // Email
+    signInWithEmail,
+    signUpWithEmail,
+    resetPassword,
+    // Phone
     signInWithPhone,
     verifyOtp,
+    // Sign out
     signOut
   }
 }
