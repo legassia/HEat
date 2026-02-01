@@ -153,7 +153,7 @@ const submitOrder = async () => {
 
       <div class="flex justify-between text-lg">
         <span class="font-bold">Total a Pagar</span>
-        <span class="font-extrabold text-heat-orange">{{ cartStore.formattedTotal }}</span>
+        <span class="font-extrabold text-heat-gray-dark">{{ cartStore.formattedTotal }}</span>
       </div>
     </GummyCard>
 

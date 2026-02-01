@@ -33,7 +33,7 @@ export const statusConfig: Record<OrderStatus, StatusConfig> = {
   delivered: {
     label: 'Entregado',
     color: 'bg-red-100 text-red-700',
-    cardColor: 'bg-red-50/40',  // Subtle reddish - needs payment!
+    cardColor: 'ring-2 ring-red-400 bg-red-50',  // ⚠️ NEEDS PAYMENT - must stand out!
     icon: 'i-lucide-hand-coins'
   },
   paid: {

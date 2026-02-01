@@ -101,18 +101,19 @@ const copyOrder = async () => {
 </script>
 
 <template>
-  <GummyCard :hoverable="true" padding="lg" :class="[currentConfig.cardColor, isActive ? 'ring-2 ring-heat-orange/30' : '']">
+  <GummyCard :hoverable="true" padding="lg" :class="[currentConfig.cardColor, isActive && order.status !== 'delivered' ? 'ring-2 ring-heat-orange/30' : '']">
     <!-- Header -->
     <div class="flex items-start justify-between mb-4">
       <div>
         <div class="flex items-center gap-2 mb-1">
           <span 
             class="px-3 py-1 rounded-gummy-sm font-bold text-lg"
-            :class="isActive ? 'gradient-orange text-white' : 'bg-heat-gray-soft text-heat-gray-dark'"
+            :class="order.status === 'delivered' ? 'bg-red-500 text-white' : isActive ? 'gradient-orange text-white' : 'bg-heat-gray-soft text-heat-gray-dark'"
           >
             {{ order.plateCode }}
           </span>
-          <span v-if="isActive" class="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <span v-if="order.status === 'delivered'" class="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          <span v-else-if="isActive" class="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
         </div>
         <p class="text-sm text-heat-gray-dark">{{ formattedDate }}</p>
       </div>
