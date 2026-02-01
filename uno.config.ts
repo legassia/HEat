@@ -120,6 +120,11 @@ export default defineConfig({
     'i-lucide-log-out',
     'i-lucide-edit',
     'i-lucide-save',
+    'i-lucide-pencil',
+    'i-lucide-wallet',
+    'i-lucide-receipt',
+    'i-lucide-message-square',
+    'i-lucide-log-in',
     // Social / Auth
     'i-lucide-mail',
     'i-lucide-lock',

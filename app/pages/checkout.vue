@@ -2,7 +2,7 @@
 import { toast } from 'vue-sonner'
 import { useCartStore } from '~/features/cart/store/cart.store'
 import { useDeliveryStore, deliveryModeLabels } from '~/features/cart/stores/delivery.store'
-import { useProfile } from '~/features/user/composables/useProfile'
+import { useProfileStore } from '~/features/user/stores/profile.store'
 
 definePageMeta({
   middleware: 'auth'
@@ -18,15 +18,15 @@ const user = useSupabaseUser()
 const supabase = useSupabaseClient<any>()
 const cartStore = useCartStore()
 const deliveryStore = useDeliveryStore()
-const { profile, fetchProfile } = useProfile()
+const profileStore = useProfileStore()
 
 const isSubmitting = ref(false)
 const error = ref('')
 const additionalNotes = ref('')
 
 // Refresh profile on mount to get latest phone/address
-onMounted(() => {
-  fetchProfile()
+onMounted(async () => {
+  await profileStore.fetchProfile()
 })
 
 // Payment info
@@ -47,11 +47,6 @@ const copyNumber = async (number: string, label: string) => {
   }
 }
 
-// Load profile on mount
-onMounted(async () => {
-  await fetchProfile()
-})
-
 // Redirect if cart is empty
 watch(() => cartStore.isEmpty, (isEmpty) => {
   if (isEmpty) {
@@ -70,7 +65,7 @@ const formattedTotal = computed(() =>
 const canSubmit = computed(() => {
   if (cartStore.isEmpty) return false
   if (!deliveryStore.isValid) return false
-  if (!profile.value?.phone) return false
+  if (!profileStore.hasPhone) return false
   return true
 })
 
@@ -96,7 +91,7 @@ const submitOrder = async () => {
   }
 
   if (!canSubmit.value) {
-    if (!profile.value?.phone) {
+    if (!profileStore.hasPhone) {
       toast.error('Teléfono requerido', {
         description: 'Por favor completa tu perfil con tu número de teléfono'
       })
@@ -322,7 +317,7 @@ const submitOrder = async () => {
     </GummyCard>
 
     <!-- Contact Info -->
-    <GummyCard v-if="profile" padding="lg" class="mb-6">
+    <GummyCard v-if="profileStore.profile" padding="lg" class="mb-6">
       <div class="flex items-center justify-between mb-4">
         <h2 class="font-bold text-heat-black flex items-center gap-2">
           <span class="i-lucide-user text-heat-orange" />
@@ -336,16 +331,16 @@ const submitOrder = async () => {
           Editar
         </NuxtLink>
       </div>
-      
-      <div class="space-y-2 text-sm">
-        <div class="flex items-center gap-2">
+
+      <div class="flex items-center justify-between text-sm">
+        <div class="flex items-center gap-2"> 
           <span class="i-lucide-user text-heat-gray-medium" />
-          <span>{{ profile.name || 'Sin nombre' }}</span>
+          <span>{{ profileStore.displayName }}</span>
         </div>
         <div class="flex items-center gap-2">
           <span class="i-lucide-phone text-heat-gray-medium" />
-          <span :class="profile.phone ? '' : 'text-red-500'">
-            {{ profile.phone || '⚠️ Teléfono requerido' }}
+          <span :class="profileStore.hasPhone ? '' : 'text-red-500'">
+            {{ profileStore.profile.phone || '⚠️ Teléfono requerido' }}
           </span>
         </div>
       </div>
@@ -366,7 +361,7 @@ const submitOrder = async () => {
     </GummyButton>
 
     <!-- Validation hints -->
-    <p v-if="!profile?.phone" class="text-center text-sm text-red-500 mt-4">
+    <p v-if="!profileStore.hasPhone" class="text-center text-sm text-red-500 mt-4">
       <span class="i-lucide-alert-circle" />
       Completa tu perfil con tu teléfono para continuar
     </p>

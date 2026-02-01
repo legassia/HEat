@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { toast } from 'vue-sonner'
-import { useProfile } from '~/features/user/composables/useProfile'
+import { useProfileStore } from '~/features/user/stores/profile.store'
 
 useHead({
   title: 'HEat - Mi Perfil'
@@ -8,7 +8,7 @@ useHead({
 
 const user = useSupabaseUser()
 const supabase = useSupabaseClient()
-const { profile, isLoading, error, fetchProfile, updateProfile } = useProfile()
+const profileStore = useProfileStore()
 
 const isEditing = ref(false)
 const isSaving = ref(false)
@@ -20,8 +20,13 @@ const formData = ref({
   address: ''
 })
 
-// Sync form with profile when profile loads or editing starts
-watch(profile, (p) => {
+// Fetch profile on mount
+onMounted(async () => {
+  await profileStore.fetchProfile()
+})
+
+// Sync form with profile when profile loads
+watch(() => profileStore.profile, (p) => {
   if (p && !isEditing.value) {
     formData.value = {
       name: p.name || '',
@@ -32,11 +37,11 @@ watch(profile, (p) => {
 }, { immediate: true })
 
 const startEditing = () => {
-  if (profile.value) {
+  if (profileStore.profile) {
     formData.value = {
-      name: profile.value.name || '',
-      phone: profile.value.phone || '',
-      address: profile.value.address || ''
+      name: profileStore.profile.name || '',
+      phone: profileStore.profile.phone || '',
+      address: profileStore.profile.address || ''
     }
   }
   isEditing.value = true
@@ -45,11 +50,11 @@ const startEditing = () => {
 const cancelEditing = () => {
   isEditing.value = false
   // Reset form to current profile
-  if (profile.value) {
+  if (profileStore.profile) {
     formData.value = {
-      name: profile.value.name || '',
-      phone: profile.value.phone || '',
-      address: profile.value.address || ''
+      name: profileStore.profile.name || '',
+      phone: profileStore.profile.phone || '',
+      address: profileStore.profile.address || ''
     }
   }
 }
@@ -62,7 +67,7 @@ const saveProfile = async () => {
 
   isSaving.value = true
   try {
-    await updateProfile({
+    await profileStore.updateProfile({
       name: formData.value.name.trim(),
       phone: formData.value.phone || undefined,
       address: formData.value.address?.trim() || undefined
@@ -73,7 +78,6 @@ const saveProfile = async () => {
     })
     
     isEditing.value = false
-    await fetchProfile() // Refresh
   } catch (e: any) {
     toast.error('Error al guardar', {
       description: e.message || 'Intenta de nuevo'
@@ -85,6 +89,7 @@ const saveProfile = async () => {
 
 const logout = async () => {
   await supabase.auth.signOut()
+  profileStore.reset()
   navigateTo('/')
 }
 </script>
@@ -99,7 +104,7 @@ const logout = async () => {
     </div>
     
     <!-- Loading -->
-    <div v-if="isLoading && !profile" class="text-center py-16">
+    <div v-if="profileStore.isLoading && !profileStore.profile" class="text-center py-16">
       <span class="i-lucide-loader-2 text-3xl text-heat-orange animate-spin" />
     </div>
     
@@ -140,7 +145,7 @@ const logout = async () => {
             <img 
               v-if="user.user_metadata?.avatar_url"
               :src="user.user_metadata.avatar_url"
-              :alt="profile?.name || 'Usuario'"
+              :alt="profileStore.displayName"
               class="w-full h-full object-cover"
             />
             <!-- Emoji avatar (default fallback) -->
@@ -148,13 +153,13 @@ const logout = async () => {
               v-else 
               class="w-full h-full flex items-center justify-center bg-gradient-to-br from-heat-orange to-heat-pink"
             >
-              <span class="text-5xl">{{ profile?.emoji || '🔥' }}</span>
+              <span class="text-5xl">{{ profileStore.displayEmoji }}</span>
             </div>
           </div>
         </div>
         
         <h2 class="text-2xl font-bold text-heat-black mt-4">
-          {{ profile?.name || 'Usuario' }}
+          {{ profileStore.displayName }}
         </h2>
         <p class="text-heat-gray-dark">
           {{ user.email }}
@@ -246,9 +251,9 @@ const logout = async () => {
       </GummyCard>
       
       <!-- Error -->
-      <div v-if="error" class="p-4 rounded-gummy bg-red-50 text-red-600 flex items-center gap-2">
+      <div v-if="profileStore.error" class="p-4 rounded-gummy bg-red-50 text-red-600 flex items-center gap-2">
         <span class="i-lucide-alert-circle" />
-        {{ error }}
+        {{ profileStore.error }}
       </div>
       
       <!-- Actions -->
