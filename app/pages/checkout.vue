@@ -24,6 +24,11 @@ const isSubmitting = ref(false)
 const error = ref('')
 const additionalNotes = ref('')
 
+// Refresh profile on mount to get latest phone/address
+onMounted(() => {
+  fetchProfile()
+})
+
 // Payment info
 const NEQUI_NUMBER = '3143686786'
 const BANCOLOMBIA_NUMBER = '3143686786'

@@ -462,4 +462,38 @@ ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash'
 
 ---
 
-*Última actualización: Febrero 2026*
+*Última actualización: 1 Febrero 2026*
+
+---
+
+## ✅ Mejoras Pre-PSE Completadas (1 Feb 2026)
+
+Antes de la integración PSE, se completaron las siguientes mejoras al perfil de usuario:
+
+### Phase 1: Real Profile Saving ✅
+- `useProfile.ts` ya tenía `updateProfile()` funcional con upsert a Supabase
+- Se verificó y mantiene el guardado real de nombre, teléfono y dirección
+
+### Phase 2: PhoneInput Component ✅
+- **Nuevo archivo:** `app/components/PhoneInput.vue`
+- Selector de prefijo país con banderas (🇨🇴 +57, 🇻🇪 +58, 🇲🇽 +52, etc.)
+- Formato automático del número (314-368-6786)
+- Parseo inteligente de números existentes
+- v-model bidireccional
+- Reutilizado de la lógica existente en `auth.vue`
+
+### Phase 3: Emoji Avatar System ✅
+- **Nueva migración:** `supabase/migrations/006_profile_emoji.sql`
+- Columna `emoji` en tabla `profiles`
+- Función `generate_random_emoji()` con 40 emojis variados
+- Trigger `profiles_default_emoji` para asignar automáticamente en INSERT
+- `UserProfile` interface actualizada con campo `emoji`
+- Avatar en `perfil.vue` muestra: Google avatar > Emoji > Icono genérico
+
+### Archivos Modificados:
+- `app/components/PhoneInput.vue` (nuevo)
+- `app/pages/perfil.vue` (refactorizado con guardado real)
+- `app/features/user/composables/useProfile.ts` (+ campo emoji)
+- `app/types/database.types.ts` (+ campo emoji)
+- `supabase/apply_all.sql` (+ emoji column y trigger)
+- `supabase/migrations/006_profile_emoji.sql` (nuevo)

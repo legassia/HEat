@@ -16,6 +16,7 @@ export default defineNuxtConfig({
 
   // Auto-import components from these directories
   components: [
+    { path: '~/components', prefix: '' },
     { path: '~/shared/components/ui', prefix: '' },
     { path: '~/shared/components/layout', prefix: '' },
     { path: '~/features/cart/components', prefix: '' },

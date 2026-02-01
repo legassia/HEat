@@ -12,10 +12,46 @@ CREATE TABLE IF NOT EXISTS profiles (
   phone TEXT,
   address TEXT,
   avatar_url TEXT,
+  emoji TEXT,
   role TEXT DEFAULT 'customer',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add emoji column if missing (for existing tables)
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS emoji TEXT;
+
+-- Function to generate random emoji
+CREATE OR REPLACE FUNCTION generate_random_emoji()
+RETURNS TEXT AS $$
+DECLARE
+  emojis TEXT[] := ARRAY[
+    '🔥', '⭐', '🌟', '💫', '✨', '🎯', '🚀', '💪', '🎉', '🎊',
+    '🍕', '🍔', '🌮', '🥪', '🍟', '🍿', '🥤', '🍩', '🧁', '🎂',
+    '🦊', '🐼', '🦁', '🐯', '🐻', '🦋', '🌺', '🌸', '🌼', '🌻',
+    '⚡', '💎', '🏆', '🎸', '🎮', '🎨', '📚', '💡', '🌈', '☀️'
+  ];
+BEGIN
+  RETURN emojis[1 + floor(random() * array_length(emojis, 1))::int];
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger function to set default emoji on profile creation
+CREATE OR REPLACE FUNCTION set_default_emoji()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.emoji IS NULL THEN
+    NEW.emoji := generate_random_emoji();
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS profiles_default_emoji ON profiles;
+CREATE TRIGGER profiles_default_emoji
+  BEFORE INSERT ON profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION set_default_emoji();
 
 -- Enable RLS
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;

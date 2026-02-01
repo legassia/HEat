@@ -20,6 +20,7 @@ export interface Database {
           phone: string | null
           address: string | null
           avatar_url: string | null
+          emoji: string | null
           created_at: string
           updated_at: string
         }
@@ -29,6 +30,7 @@ export interface Database {
           phone?: string | null
           address?: string | null
           avatar_url?: string | null
+          emoji?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -38,6 +40,7 @@ export interface Database {
           phone?: string | null
           address?: string | null
           avatar_url?: string | null
+          emoji?: string | null
           updated_at?: string
         }
       }

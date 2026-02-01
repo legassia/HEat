@@ -1,34 +1,91 @@
 <script setup lang="ts">
+import { toast } from 'vue-sonner'
+import { useProfile } from '~/features/user/composables/useProfile'
+
 useHead({
   title: 'HEat - Mi Perfil'
 })
 
 const user = useSupabaseUser()
 const supabase = useSupabaseClient()
+const { profile, isLoading, error, fetchProfile, updateProfile } = useProfile()
 
 const isEditing = ref(false)
-const isLoading = ref(false)
+const isSaving = ref(false)
 
-const profile = ref({
-  name: user.value?.user_metadata?.full_name || '',
-  phone: user.value?.phone || '',
+// Local form state (editable copy)
+const formData = ref({
+  name: '',
+  phone: '',
   address: ''
 })
+
+// Sync form with profile when profile loads or editing starts
+watch(profile, (p) => {
+  if (p && !isEditing.value) {
+    formData.value = {
+      name: p.name || '',
+      phone: p.phone || '',
+      address: p.address || ''
+    }
+  }
+}, { immediate: true })
+
+const startEditing = () => {
+  if (profile.value) {
+    formData.value = {
+      name: profile.value.name || '',
+      phone: profile.value.phone || '',
+      address: profile.value.address || ''
+    }
+  }
+  isEditing.value = true
+}
+
+const cancelEditing = () => {
+  isEditing.value = false
+  // Reset form to current profile
+  if (profile.value) {
+    formData.value = {
+      name: profile.value.name || '',
+      phone: profile.value.phone || '',
+      address: profile.value.address || ''
+    }
+  }
+}
+
+const saveProfile = async () => {
+  if (!formData.value.name.trim()) {
+    toast.error('Nombre requerido')
+    return
+  }
+
+  isSaving.value = true
+  try {
+    await updateProfile({
+      name: formData.value.name.trim(),
+      phone: formData.value.phone || undefined,
+      address: formData.value.address?.trim() || undefined
+    })
+    
+    toast.success('Perfil actualizado', {
+      description: 'Tus datos se han guardado correctamente'
+    })
+    
+    isEditing.value = false
+    await fetchProfile() // Refresh
+  } catch (e: any) {
+    toast.error('Error al guardar', {
+      description: e.message || 'Intenta de nuevo'
+    })
+  } finally {
+    isSaving.value = false
+  }
+}
 
 const logout = async () => {
   await supabase.auth.signOut()
   navigateTo('/')
-}
-
-const saveProfile = async () => {
-  isLoading.value = true
-  try {
-    // TODO: Save to Supabase profile table
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    isEditing.value = false
-  } finally {
-    isLoading.value = false
-  }
 }
 </script>
 
@@ -41,8 +98,13 @@ const saveProfile = async () => {
       </h1>
     </div>
     
+    <!-- Loading -->
+    <div v-if="isLoading && !profile" class="text-center py-16">
+      <span class="i-lucide-loader-2 text-3xl text-heat-orange animate-spin" />
+    </div>
+    
     <!-- Not Logged In -->
-    <template v-if="!user">
+    <template v-else-if="!user">
       <GummyCard padding="lg" class="text-center">
         <div class="w-24 h-24 mx-auto rounded-full bg-heat-gray-soft flex items-center justify-center mb-6">
           <span class="i-lucide-user text-4xl text-heat-gray-medium" />
@@ -74,27 +136,25 @@ const saveProfile = async () => {
       <div class="text-center">
         <div class="relative inline-block">
           <div class="w-28 h-28 rounded-full bg-heat-cyan overflow-hidden border-4 border-heat-cyan shadow-gummy-cyan">
+            <!-- Google avatar -->
             <img 
               v-if="user.user_metadata?.avatar_url"
               :src="user.user_metadata.avatar_url"
-              :alt="user.user_metadata?.full_name || 'Usuario'"
+              :alt="profile?.name || 'Usuario'"
               class="w-full h-full object-cover"
             />
-            <div v-else class="w-full h-full flex items-center justify-center">
-              <span class="i-lucide-user text-white text-4xl" />
+            <!-- Emoji avatar (default fallback) -->
+            <div 
+              v-else 
+              class="w-full h-full flex items-center justify-center bg-gradient-to-br from-heat-orange to-heat-pink"
+            >
+              <span class="text-5xl">{{ profile?.emoji || '🔥' }}</span>
             </div>
           </div>
-          
-          <button 
-            class="absolute bottom-0 right-0 w-10 h-10 rounded-full gradient-orange flex items-center justify-center shadow-gummy gummy-press"
-            aria-label="Cambiar foto"
-          >
-            <span class="i-lucide-camera text-white" />
-          </button>
         </div>
         
         <h2 class="text-2xl font-bold text-heat-black mt-4">
-          {{ user.user_metadata?.full_name || 'Usuario' }}
+          {{ profile?.name || 'Usuario' }}
         </h2>
         <p class="text-heat-gray-dark">
           {{ user.email }}
@@ -108,7 +168,7 @@ const saveProfile = async () => {
           <button 
             v-if="!isEditing"
             class="flex items-center gap-1 text-sm text-heat-orange font-semibold hover:bg-heat-orange/10 px-3 py-1.5 rounded-gummy transition-colors"
-            @click="isEditing = true"
+            @click="startEditing"
           >
             <span class="i-lucide-pencil text-sm" />
             Editar
@@ -116,51 +176,59 @@ const saveProfile = async () => {
         </div>
         
         <form @submit.prevent="saveProfile" class="space-y-4">
+          <!-- Name -->
           <div>
             <label class="block text-sm font-semibold text-heat-black mb-2">
               Nombre completo
+              <span v-if="isEditing" class="text-red-500">*</span>
             </label>
             <input 
-              v-model="profile.name"
+              v-model="formData.name"
               type="text"
               :disabled="!isEditing"
+              required
               class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
               placeholder="Tu nombre"
             />
           </div>
           
+          <!-- Phone -->
           <div>
             <label class="block text-sm font-semibold text-heat-black mb-2">
               Teléfono
             </label>
-            <input 
-              v-model="profile.phone"
-              type="tel"
+            <PhoneInput 
+              v-model="formData.phone"
               :disabled="!isEditing"
-              class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
-              placeholder="+58 322-857-7409"
+              placeholder="314-368-6786"
             />
+            <p v-if="isEditing" class="text-xs text-heat-gray-dark mt-1">
+              Incluye tu número para que podamos contactarte sobre tu pedido
+            </p>
           </div>
           
+          <!-- Address -->
           <div>
             <label class="block text-sm font-semibold text-heat-black mb-2">
               Dirección de entrega
             </label>
             <textarea 
-              v-model="profile.address"
+              v-model="formData.address"
               :disabled="!isEditing"
               rows="3"
               class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60 resize-none"
-              placeholder="Añada tu dirección para poder recibir domicilios en el sector!"
+              placeholder="Calle, número, barrio, referencias..."
             />
           </div>
           
+          <!-- Actions -->
           <div v-if="isEditing" class="flex gap-3 pt-4">
             <GummyButton 
               type="button" 
               variant="ghost" 
               class="flex-1"
-              @click="isEditing = false"
+              :disabled="isSaving"
+              @click="cancelEditing"
             >
               Cancelar
             </GummyButton>
@@ -168,13 +236,20 @@ const saveProfile = async () => {
               type="submit" 
               variant="primary" 
               class="flex-1"
-              :loading="isLoading"
+              :loading="isSaving"
             >
+              <span class="i-lucide-check mr-2" />
               Guardar
             </GummyButton>
           </div>
         </form>
       </GummyCard>
+      
+      <!-- Error -->
+      <div v-if="error" class="p-4 rounded-gummy bg-red-50 text-red-600 flex items-center gap-2">
+        <span class="i-lucide-alert-circle" />
+        {{ error }}
+      </div>
       
       <!-- Actions -->
       <div class="space-y-3">
@@ -199,4 +274,3 @@ const saveProfile = async () => {
     </template>
   </div>
 </template>
-

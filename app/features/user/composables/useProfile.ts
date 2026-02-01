@@ -11,6 +11,7 @@ export interface UserProfile {
   email: string
   avatarUrl: string | null
   address: string | null
+  emoji: string | null
 }
 
 export function useProfile() {
@@ -49,7 +50,8 @@ export function useProfile() {
         phone: row?.phone || user.value.phone || '',
         email: user.value.email || '',
         avatarUrl: row?.avatar_url || user.value.user_metadata?.avatar_url || null,
-        address: row?.address || null
+        address: row?.address || null,
+        emoji: row?.emoji || null
       }
     } catch (e: unknown) {
       const errorMsg = e instanceof Error ? e.message : 'Error al cargar perfil'
@@ -61,26 +63,45 @@ export function useProfile() {
   }
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
-    if (!user.value) return false
-
     isLoading.value = true
     error.value = null
     
     try {
-      const insertData: ProfileInsert = {
-        id: user.value.id,
+      // Get fresh session to ensure we have user ID
+      const { data: { session } } = await supabase.auth.getSession()
+      const userId = session?.user?.id
+      
+      if (!userId) {
+        throw new Error('No hay sesión activa')
+      }
+      
+      const updateData = {
         name: updates.name ?? null,
         phone: updates.phone ?? null,
         address: updates.address ?? null,
         updated_at: new Date().toISOString()
       }
       
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: updateError } = await (supabase as any)
+      // Try UPDATE first (profile likely exists from trigger)
+      const { data, error: updateError } = await supabase
         .from('profiles')
-        .upsert(insertData)
+        .update(updateData)
+        .eq('id', userId)
+        .select()
       
-      if (updateError) throw updateError
+      // If no rows updated, try INSERT
+      if (!updateError && (!data || data.length === 0)) {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            ...updateData
+          })
+        
+        if (insertError) throw insertError
+      } else if (updateError) {
+        throw updateError
+      }
       
       if (profile.value) {
         Object.assign(profile.value, updates)
