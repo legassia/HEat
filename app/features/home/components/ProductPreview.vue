@@ -192,33 +192,3 @@ defineExpose({
   transform: scale(0) rotate(15deg);
 }
 </style>
-
-<!-- 
-
-// Auto-imports de Nuxt - declaraciones para el linter
-import type { User } from '@supabase/supabase-js'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Ref, ComputedRef } from 'vue'
-
-declare global {
-  // Nuxt composables
-  function useSupabaseClient(): SupabaseClient
-  function useSupabaseUser(): Ref<User | null>
-  function useHead(options: Record<string, unknown>): void
-  function useRouter(): { push: (path: string) => void }
-  function useRoute(): { path: string, query: Record<string, string> }
-  function navigateTo(path: string): void
-  function definePageMeta(meta: Record<string, unknown>): void
-  
-  // Vue composables
-  function ref<T>(value: T): Ref<T>
-  function computed<T>(getter: () => T): ComputedRef<T>
-  function watch(source: unknown, callback: (newVal: unknown, oldVal: unknown) => void, options?: Record<string, unknown>): void
-  function readonly<T>(value: T): T
-  function toRef<T, K extends keyof T>(object: T, key: K): Ref<T[K]>
-}
-
-export {}
-
-
--->

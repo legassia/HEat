@@ -3,18 +3,18 @@ import { useSpeech } from '../composables/useSpeech'
 import { useUserRole } from '~/features/auth/composables/useUserRole'
 
 interface OrderItem {
-  name: string
-  quantity: number
-  selectedOptions?: Array<{ name: string; quantity: number }>
+  readonly name: string
+  readonly quantity: number
+  readonly selectedOptions?: ReadonlyArray<{ readonly name: string; readonly quantity: number }>
 }
 
 interface Order {
-  id: string
-  plateCode: string
-  status: 'pending' | 'cooking' | 'ready' | 'delivered' | 'cancelled'
-  createdAt: Date
-  total: number
-  items: OrderItem[]
+  readonly id: string
+  readonly plateCode: string
+  readonly status: 'pending' | 'cooking' | 'ready' | 'delivered' | 'cancelled'
+  readonly createdAt: Date
+  readonly total: number
+  readonly items: ReadonlyArray<OrderItem>
 }
 
 const props = defineProps<{
@@ -85,7 +85,7 @@ const playOrder = () => {
       items: props.order.items.map(item => ({
         productName: item.name,
         quantity: item.quantity,
-        selectedOptions: item.selectedOptions
+        selectedOptions: item.selectedOptions as Array<{ name: string; quantity: number }>
       })),
       total: props.order.total
     })

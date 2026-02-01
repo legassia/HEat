@@ -22,7 +22,7 @@ export function useProfile() {
   const error = ref<string | null>(null)
 
   const fetchProfile = async () => {
-    if (!user.value) {
+    if (!user.value?.id) {
       profile.value = null
       return
     }
@@ -96,9 +96,11 @@ export function useProfile() {
     }
   }
 
-  watch(user, () => {
+ watch(user, () => {
+  if (user.value?.id) {
     fetchProfile()
-  }, { immediate: true })
+  }
+}, { immediate: true })
 
   return {
     profile: readonly(profile),

@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { toast } from 'vue-sonner'
 import { useCartStore } from '~/features/cart/store/cart.store'
+import { useProfile } from '~/features/user/composables/useProfile'
 
 definePageMeta({
   middleware: 'auth'
@@ -9,10 +11,13 @@ useHead({
   title: 'HEat - Confirmar Pedido'
 })
 
-const supabase = useSupabaseClient<any>()
+const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+
 const user = useSupabaseUser()
+const supabase = useSupabaseClient<any>()
 const cartStore = useCartStore()
 const router = useRouter()
+const { profile, fetchProfile } = useProfile()
 
 const isSubmitting = ref(false)
 const error = ref('')
@@ -22,6 +27,21 @@ const deliveryInfo = ref({
   phone: user.value?.phone || '',
   address: '',
   notes: ''
+})
+
+// Auto-load profile data if exists
+onMounted(async () => {
+  await fetchProfile()
+  if (profile.value) {
+    deliveryInfo.value.name = profile.value.name || deliveryInfo.value.name
+    deliveryInfo.value.phone = profile.value.phone || deliveryInfo.value.phone
+    deliveryInfo.value.address = profile.value.address || ''
+  }
+})
+
+// Check if profile is complete
+const hasCompleteProfile = computed(() => {
+  return !!(profile.value?.name && profile.value?.phone)
 })
 
 const submitOrder = async () => {
@@ -39,11 +59,11 @@ const submitOrder = async () => {
   error.value = ''
 
   try {
-    // Create order
+    // Create order with user_id for RLS policy
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
-        user_id: user.value.id,
+        user_id: user.value!.id,
         total: cartStore.total,
         notes: deliveryInfo.value.notes || null
       })
@@ -52,10 +72,10 @@ const submitOrder = async () => {
 
     if (orderError) throw orderError
 
-    // Create order items
     const orderItems = cartStore.items.map(item => ({
       order_id: order.id,
-      product_id: item.productId,
+      // Solo si es UUID válido
+      product_id: isUUID(item.productId) ? item.productId : null,
       quantity: item.quantity,
       selected_options: item.selectedOptions,
       subtotal: (item.basePrice + item.selectedOptions.reduce((sum: number, opt) => sum + opt.priceModifier, 0)) * item.quantity
@@ -67,13 +87,25 @@ const submitOrder = async () => {
 
     if (itemsError) throw itemsError
 
-    // Clear cart and redirect
+    // Clear cart and show success
     cartStore.clearCart()
-    
-    // Show success and redirect to history
+
+    toast.success(`¡Pedido ${order.plate_code} confirmado!`, {
+      description: 'Tu pedido está siendo preparado',
+      duration: 4000
+    })
+
+    // Redirect to history
     navigateTo(`/historial?success=${order.plate_code}`)
   } catch (e: any) {
-    error.value = e.message || 'Error al crear el pedido'
+    const errorMsg = e.message || 'Error al crear el pedido'
+    error.value = errorMsg
+
+    toast.error('Error al procesar pedido', {
+      description: errorMsg,
+      duration: 5000
+    })
+
     console.error('Order error:', e)
   } finally {
     isSubmitting.value = false
@@ -85,7 +117,8 @@ const submitOrder = async () => {
   <div class="max-w-2xl mx-auto">
     <!-- Header -->
     <div class="mb-8">
-      <NuxtLink to="/carrito" class="text-heat-orange text-sm font-semibold hover:underline mb-4 inline-flex items-center gap-1">
+      <NuxtLink to="/carrito"
+        class="text-heat-orange text-sm font-semibold hover:underline mb-4 inline-flex items-center gap-1">
         <span class="i-lucide-chevron-left" />
         Volver al carrito
       </NuxtLink>
@@ -93,113 +126,95 @@ const submitOrder = async () => {
         Confirmar Pedido
       </h1>
     </div>
-    
+
     <!-- Error Message -->
-    <div 
-      v-if="error"
-      class="mb-6 p-4 rounded-gummy bg-red-50 text-red-600 flex items-center gap-2"
-    >
+    <div v-if="error" class="mb-6 p-4 rounded-gummy bg-red-50 text-red-600 flex items-center gap-2">
       <span class="i-lucide-alert-circle text-lg" />
       {{ error }}
     </div>
-    
+
     <!-- Order Summary -->
     <GummyCard padding="lg" class="mb-6">
       <h2 class="font-bold text-heat-black mb-4">Resumen del Pedido</h2>
-      
+
       <div class="space-y-3 mb-4">
-        <div 
-          v-for="item in cartStore.items"
-          :key="item.id"
-          class="flex justify-between text-sm"
-        >
+        <div v-for="item in cartStore.items" :key="item.id" class="flex justify-between text-sm">
           <div>
             <span class="font-semibold">{{ item.quantity }}x</span>
             <span class="ml-2">{{ item.productName }}</span>
             <p v-if="item.selectedOptions.length > 0" class="text-xs text-heat-gray-dark ml-5">
-              {{ item.selectedOptions.map(o => o.name).join(', ') }}
+              {{item.selectedOptions.map(o => o.name).join(', ')}}
             </p>
           </div>
         </div>
       </div>
-      
+
       <hr class="border-heat-gray-medium/30 my-4" />
-      
+
       <div class="flex justify-between text-lg">
         <span class="font-bold">Total a Pagar</span>
         <span class="font-extrabold text-heat-orange">{{ cartStore.formattedTotal }}</span>
       </div>
     </GummyCard>
-    
+
     <!-- Delivery Info -->
     <GummyCard padding="lg" class="mb-6">
-      <h2 class="font-bold text-heat-black mb-4">Información de Entrega</h2>
-      
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-bold text-heat-black">Información de Entrega</h2>
+        <NuxtLink v-if="hasCompleteProfile" to="/perfil"
+          class="text-sm text-heat-orange hover:underline flex items-center gap-1">
+          <span class="i-lucide-edit text-sm" />
+          Editar perfil
+        </NuxtLink>
+      </div>
+
       <form class="space-y-4" @submit.prevent="submitOrder">
         <div>
           <label class="block text-sm font-semibold text-heat-black mb-2">
             Nombre
           </label>
-          <input 
-            v-model="deliveryInfo.name"
-            type="text"
-            required
-            class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none"
-            placeholder="Tu nombre"
-          />
+          <input v-model="deliveryInfo.name" type="text" required :readonly="hasCompleteProfile && !!profile?.name"
+            :class="hasCompleteProfile && !!profile?.name ? 'bg-heat-gray-soft/50 cursor-not-allowed' : 'bg-heat-gray-soft'"
+            class="w-full px-4 py-3 rounded-gummy border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none"
+            placeholder="Tu nombre" />
         </div>
-        
+
         <div>
           <label class="block text-sm font-semibold text-heat-black mb-2">
             Teléfono
           </label>
-          <input 
-            v-model="deliveryInfo.phone"
-            type="tel"
-            required
-            class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none"
-            placeholder="+57 314-368-6786"
-          />
+          <input v-model="deliveryInfo.phone" type="tel" required :readonly="hasCompleteProfile && !!profile?.phone"
+            :class="hasCompleteProfile && !!profile?.phone ? 'bg-heat-gray-soft/50 cursor-not-allowed' : 'bg-heat-gray-soft'"
+            class="w-full px-4 py-3 rounded-gummy border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none"
+            placeholder="+57 314-368-6786" />
         </div>
-        
+
         <div>
           <label class="block text-sm font-semibold text-heat-black mb-2">
             Dirección <span class="text-heat-gray-dark font-normal">(opcional)</span>
           </label>
-          <textarea 
-            v-model="deliveryInfo.address"
-            rows="2"
+          <textarea v-model="deliveryInfo.address" rows="2"
             class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none resize-none"
-            placeholder="Tu dirección"
-          />
+            placeholder="Tu dirección" />
         </div>
-        
+
         <div>
           <label class="block text-sm font-semibold text-heat-black mb-2">
             Notas adicionales <span class="text-heat-gray-dark font-normal">(opcional)</span>
           </label>
-          <textarea 
-            v-model="deliveryInfo.notes"
-            rows="2"
+          <textarea v-model="deliveryInfo.notes" rows="2"
             class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none resize-none"
-            placeholder="Instrucciones especiales, alergias, etc."
-          />
+            placeholder="Instrucciones especiales, alergias, etc." />
         </div>
-        
-        <GummyButton 
-          type="submit"
-          variant="primary"
-          size="lg"
-          class="w-full mt-6"
-          :loading="isSubmitting"
-          :disabled="cartStore.isEmpty"
-        >
+
+        <GummyButton type="submit" variant="primary" size="lg" class="w-full mt-6" :loading="isSubmitting"
+          :disabled="cartStore.isEmpty">
           <span class="i-lucide-check mr-2" />
           Confirmar Pedido
         </GummyButton>
       </form>
     </GummyCard>
-    
+
     <!-- Payment Note -->
     <p class="text-center text-sm text-heat-gray-dark">
       El pago se realiza al momento de la entrega
