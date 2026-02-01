@@ -20,8 +20,8 @@ const announcements = [
     title: 'Contacto',
     icon: 'i-lucide-phone',
     content: [
-      { label: 'Teléfono', value: '+57 314-368-6786' },
-      { label: 'WhatsApp', value: '+57 322-857-7409' },
+      { label: 'WhatsApp', value: '+57 314-368-6786' },
+      // { label: 'WhatsApp', value: '+57 322-857-7409' },
       { label: 'Email', value: 'arepaisas@gmail.com' }
     ]
   },
@@ -30,7 +30,8 @@ const announcements = [
     type: 'ubicacion',
     title: 'Ubicación',
     icon: 'i-lucide-map-pin',
-    content: 'Bogotá Colombia. Cerca de ti.'
+    content: 'Calle 21 Sur #68D-30, Bogotá Colombia.'
+    // Foto del map
   }
 ]
 
@@ -172,7 +173,7 @@ const promos = [
                   <span class="font-semibold">Arepas</span>
                 </div>
               </td>
-              <td class="p-4 text-right font-bold text-heat-orange">$2.500</td>
+              <td class="p-4 text-right font-bold text-heat-orange">$2.000</td>
             </tr>
             <tr class="border-b border-heat-gray-medium/30 hover:bg-heat-gray-soft/50 transition-colors">
               <td class="p-4">
