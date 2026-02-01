@@ -34,13 +34,21 @@ export function useOrderHistory() {
   const error = ref<string | null>(null)
 
   const fetchOrders = async () => {
-    if (!user.value?.id) {
+    // Get fresh session to ensure we have the latest auth state
+    const { data: { session } } = await supabase.auth.getSession()
+    const userId = session?.user?.id
+    
+    console.log('[useOrderHistory] fetchOrders called, userId:', userId)
+    
+    if (!userId) {
+      console.log('[useOrderHistory] No user session, skipping fetch')
       orders.value = []
       return
     }
 
     isLoading.value = true
     error.value = null
+    console.log('[useOrderHistory] Fetching orders for user:', userId)
 
     try {
       const { data, error: fetchError } = await supabase
@@ -54,11 +62,12 @@ export function useOrderHistory() {
             selected_options,
             products ( id, name, category )
           )
-        `).eq('user_id', user.value.id)
+        `).eq('user_id', userId)
         .order('created_at', { ascending: false })
 
       if (fetchError) throw fetchError
 
+      console.log('[useOrderHistory] Raw data from Supabase:', data)
       const typedData = data as OrderWithItems[] | null
 
       orders.value = (typedData || []).map(order => ({
@@ -89,8 +98,11 @@ export function useOrderHistory() {
     }
   }
 
-  const subscribeToUpdates = () => {
-    if (!user.value?.id) return null
+  const subscribeToUpdates = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const userId = session?.user?.id
+    
+    if (!userId) return null
 
     const channel = supabase
       .channel('order-updates')
@@ -100,7 +112,7 @@ export function useOrderHistory() {
           event: 'UPDATE',
           schema: 'public',
           table: 'orders',
-          filter: `user_id=eq.${user.value.id}`
+          filter: `user_id=eq.${userId}`
         },
         (payload) => {
           const updated = payload.new as OrderRow
@@ -117,9 +129,13 @@ export function useOrderHistory() {
     }
   }
 
-  watch(user, () => {
-    fetchOrders()
-  }, { immediate: true })
+  // Watch for user logout to clear orders
+  watch(() => user.value?.id, (newId, oldId) => {
+    if (!newId && oldId) {
+      // User logged out
+      orders.value = []
+    }
+  })
 
   return {
     orders: readonly(orders),

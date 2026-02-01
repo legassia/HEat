@@ -30,7 +30,7 @@ const announcements = [
     type: 'ubicacion',
     title: 'Ubicación',
     icon: 'i-lucide-map-pin',
-    content: 'Tu ciudad, Venezuela. Cerca de ti.'
+    content: 'Bogotá Colombia. Cerca de ti.'
   }
 ]
 

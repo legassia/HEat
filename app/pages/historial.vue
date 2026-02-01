@@ -2,6 +2,10 @@
 import OrderCard from '~/features/orders/components/OrderCard.vue'
 import { useOrderHistory } from '~/features/orders/composables/useOrderHistory'
 
+definePageMeta({
+  middleware: 'auth'
+})
+
 useHead({
   title: 'HEat - Historial de Pedidos'
 })
@@ -11,8 +15,10 @@ const { orders, isLoading, error, fetchOrders, subscribeToUpdates } = useOrderHi
 // Subscribe to realtime updates
 let unsubscribe: (() => void) | null = null
 
-onMounted(() => {
-  unsubscribe = subscribeToUpdates()
+onMounted(async () => {
+  console.log('[historial] onMounted called')
+  await fetchOrders() // Ensure orders are fetched client-side
+  unsubscribe = await subscribeToUpdates()
 })
 
 onUnmounted(() => {

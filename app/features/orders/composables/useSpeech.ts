@@ -17,6 +17,8 @@ export function useSpeech() {
     
     const voices = window.speechSynthesis.getVoices()
 
+    console.log('[useSpeech] Voices:', voices)
+
     // Try to find Spanish voice
     const spanishVoice = voices.find(v => 
       v.lang.startsWith('es-MX') && v.voiceURI.startsWith('Paulina')
