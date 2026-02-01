@@ -1,6 +1,5 @@
 // Composable for user role management
 export function useUserRole() {
-  const user = useSupabaseUser()
   const supabase = useSupabaseClient()
   
   const userRole = ref<'customer' | 'admin' | 'dev'>('customer')
@@ -8,7 +7,9 @@ export function useUserRole() {
   
   // Fetch user role from database
   const fetchRole = async () => {
-    if (!user.value?.id) {
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    if (!session?.user?.id) {
       userRole.value = 'customer'
       return
     }
@@ -16,9 +17,9 @@ export function useUserRole() {
     isLoading.value = true
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('profiles')  // Fixed: was 'users', should be 'profiles'
         .select('role')
-        .eq('id', user.value.id)
+        .eq('id', session.user.id)
         .single()
       
       if (error) {
@@ -35,10 +36,10 @@ export function useUserRole() {
     }
   }
   
-  // Watch for user changes and fetch role
-  watch(user, () => {
+  // Fetch role on mount (client-side)
+  onMounted(() => {
     fetchRole()
-  }, { immediate: true })
+  })
   
   // Computed helpers
   const isAdmin = computed(() => userRole.value === 'admin' || userRole.value === 'dev')

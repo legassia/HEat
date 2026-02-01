@@ -16,8 +16,7 @@ const { orders, isLoading, error, fetchOrders, subscribeToUpdates } = useOrderHi
 let unsubscribe: (() => void) | null = null
 
 onMounted(async () => {
-  console.log('[historial] onMounted called')
-  await fetchOrders() // Ensure orders are fetched client-side
+  await fetchOrders()
   unsubscribe = await subscribeToUpdates()
 })
 
@@ -94,6 +93,7 @@ const filteredOrders = computed(() => {
           v-for="order in filteredOrders"
           :key="order.id"
           :order="order"
+          @status-updated="fetchOrders"
         />
       </div>
       

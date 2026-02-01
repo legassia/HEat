@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { toast } from 'vue-sonner'
 import { useSpeech } from '../composables/useSpeech'
 import { useUserRole } from '~/features/auth/composables/useUserRole'
 
@@ -21,8 +22,85 @@ const props = defineProps<{
   order: Order
 }>()
 
+const emit = defineEmits<{
+  statusUpdated: [orderId: string, newStatus: Order['status']]
+}>()
+
+const supabase = useSupabaseClient<any>()
 const { isAdmin } = useUserRole()
 const { speakOrder, isSpeaking, stop, speechRate, cycleRate } = useSpeech()
+
+const isUpdating = ref(false)
+
+// Status flow: pending → cooking → ready → delivered
+const nextStatusMap: Record<string, Order['status'] | null> = {
+  pending: 'cooking',
+  cooking: 'ready',
+  ready: 'delivered',
+  delivered: null,
+  cancelled: null
+}
+
+const nextStatus = computed(() => nextStatusMap[props.order.status])
+
+const nextStatusLabel = computed(() => {
+  const labels: Record<string, string> = {
+    cooking: 'Aceptar Pedido',
+    ready: 'Marcar Listo',
+    delivered: 'Entregar'
+  }
+  return nextStatus.value ? labels[nextStatus.value] : null
+})
+
+// Update order status
+const updateStatus = async () => {
+  if (!nextStatus.value || isUpdating.value) return
+  
+  isUpdating.value = true
+  try {
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: nextStatus.value })
+      .eq('id', props.order.id)
+    
+    if (error) throw error
+    
+    toast.success(`Pedido ${props.order.plateCode} actualizado`, {
+      description: `Estado: ${statusConfig[nextStatus.value].label}`
+    })
+    
+    emit('statusUpdated', props.order.id, nextStatus.value)
+  } catch (e: unknown) {
+    const errorMsg = e instanceof Error ? e.message : 'Error al actualizar'
+    toast.error('Error', { description: errorMsg })
+    console.error('Error updating order status:', e)
+  } finally {
+    isUpdating.value = false
+  }
+}
+
+// Cancel order
+const cancelOrder = async () => {
+  if (isUpdating.value) return
+  
+  isUpdating.value = true
+  try {
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: 'cancelled' })
+      .eq('id', props.order.id)
+    
+    if (error) throw error
+    
+    toast.info(`Pedido ${props.order.plateCode} cancelado`)
+    emit('statusUpdated', props.order.id, 'cancelled')
+  } catch (e: unknown) {
+    const errorMsg = e instanceof Error ? e.message : 'Error al cancelar'
+    toast.error('Error', { description: errorMsg })
+  } finally {
+    isUpdating.value = false
+  }
+}
 
 const statusConfig = {
   pending: {
@@ -171,9 +249,38 @@ const copyOrder = async () => {
       </span>
     </div>
     
-    <!-- Admin Controls (TTS & Copy) -->
+    <!-- Admin Status Controls -->
     <div 
-      v-if="isAdmin || true"
+      v-if="isAdmin && isActive"
+      class="mt-4 pt-4 border-t border-heat-gray-medium/30 flex items-center gap-2"
+    >
+      <!-- Advance Status Button -->
+      <button 
+        v-if="nextStatusLabel"
+        class="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 rounded-gummy-sm text-sm font-semibold transition-colors gradient-orange text-white hover:opacity-90 disabled:opacity-50"
+        :disabled="isUpdating"
+        @click="updateStatus"
+      >
+        <span v-if="isUpdating" class="i-lucide-loader-2 animate-spin" />
+        <span v-else-if="order.status === 'pending'" class="i-lucide-chef-hat" />
+        <span v-else-if="order.status === 'cooking'" class="i-lucide-check" />
+        <span v-else class="i-lucide-package-check" />
+        {{ nextStatusLabel }}
+      </button>
+      
+      <!-- Cancel Button -->
+      <button 
+        v-if="order.status === 'pending'"
+        class="px-4 py-2.5 rounded-gummy-sm bg-red-50 text-red-600 text-sm font-medium hover:bg-red-100 transition-colors disabled:opacity-50"
+        :disabled="isUpdating"
+        @click="cancelOrder"
+      >
+        <span class="i-lucide-x" />
+      </button>
+    </div>
+    
+    <!-- Tools (TTS & Copy) -->
+    <div 
       class="mt-4 pt-4 border-t border-heat-gray-medium/30 flex items-center gap-2"
     >
       <!-- Play/Stop Button -->

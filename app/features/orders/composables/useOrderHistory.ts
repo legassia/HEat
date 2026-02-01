@@ -38,17 +38,13 @@ export function useOrderHistory() {
     const { data: { session } } = await supabase.auth.getSession()
     const userId = session?.user?.id
     
-    console.log('[useOrderHistory] fetchOrders called, userId:', userId)
-    
     if (!userId) {
-      console.log('[useOrderHistory] No user session, skipping fetch')
       orders.value = []
       return
     }
 
     isLoading.value = true
     error.value = null
-    console.log('[useOrderHistory] Fetching orders for user:', userId)
 
     try {
       const { data, error: fetchError } = await supabase
@@ -67,7 +63,6 @@ export function useOrderHistory() {
 
       if (fetchError) throw fetchError
 
-      console.log('[useOrderHistory] Raw data from Supabase:', data)
       const typedData = data as OrderWithItems[] | null
 
       orders.value = (typedData || []).map(order => ({
