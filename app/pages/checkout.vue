@@ -2,6 +2,8 @@
 import { toast } from 'vue-sonner'
 import { useCartStore } from '~/features/cart/store/cart.store'
 import { useProfile } from '~/features/user/composables/useProfile'
+import { useDeliveryMode, type DeliveryMode } from '~/features/cart/composables/useDeliveryMode'
+import DeliveryModeSelector from '~/features/cart/components/DeliveryModeSelector.vue'
 
 definePageMeta({
   middleware: 'auth'
@@ -19,29 +21,47 @@ const cartStore = useCartStore()
 const router = useRouter()
 const { profile, fetchProfile } = useProfile()
 
+// Delivery mode
+const {
+  mode,
+  tableNumber,
+  pickupTime,
+  pickupNotes,
+  deliveryAddress,
+  deliveryNotes,
+  deliveryFee,
+  isValid: isDeliveryValid,
+  buildOrderNotes,
+  setMode,
+  setTable,
+  loadFromProfile
+} = useDeliveryMode()
+
 const isSubmitting = ref(false)
 const error = ref('')
+const additionalNotes = ref('')
 
-const deliveryInfo = ref({
-  name: user.value?.user_metadata?.full_name || '',
-  phone: user.value?.phone || '',
-  address: '',
-  notes: ''
-})
-
-// Auto-load profile data if exists
+// Auto-load profile data
 onMounted(async () => {
   await fetchProfile()
-  if (profile.value) {
-    deliveryInfo.value.name = profile.value.name || deliveryInfo.value.name
-    deliveryInfo.value.phone = profile.value.phone || deliveryInfo.value.phone
-    deliveryInfo.value.address = profile.value.address || ''
+  if (profile.value?.address) {
+    loadFromProfile(profile.value)
   }
 })
 
-// Check if profile is complete
-const hasCompleteProfile = computed(() => {
-  return !!(profile.value?.name && profile.value?.phone)
+// Total with delivery fee
+const totalWithDelivery = computed(() => cartStore.total + deliveryFee.value)
+const formattedTotal = computed(() => 
+  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })
+    .format(totalWithDelivery.value)
+)
+
+// Check if can submit
+const canSubmit = computed(() => {
+  if (cartStore.isEmpty) return false
+  if (!isDeliveryValid.value) return false
+  if (!profile.value?.phone) return false
+  return true
 })
 
 const submitOrder = async () => {
@@ -50,8 +70,13 @@ const submitOrder = async () => {
     return
   }
 
-  if (cartStore.isEmpty) {
-    router.push('/')
+  if (!canSubmit.value) {
+    if (!profile.value?.phone) {
+      toast.error('Teléfono requerido', {
+        description: 'Por favor completa tu perfil con tu número de teléfono'
+      })
+      navigateTo('/perfil')
+    }
     return
   }
 
@@ -59,13 +84,20 @@ const submitOrder = async () => {
   error.value = ''
 
   try {
-    // Create order with user_id for RLS policy
+    // Build complete notes
+    const notesParts = [buildOrderNotes.value]
+    if (additionalNotes.value) {
+      notesParts.push(`📝 ${additionalNotes.value}`)
+    }
+    const finalNotes = notesParts.filter(Boolean).join('\n')
+
+    // Create order
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
         user_id: user.value!.id,
-        total: cartStore.total,
-        notes: deliveryInfo.value.notes || null
+        total: totalWithDelivery.value,
+        notes: finalNotes || null
       })
       .select('id, plate_code')
       .single()
@@ -74,7 +106,6 @@ const submitOrder = async () => {
 
     const orderItems = cartStore.items.map(item => ({
       order_id: order.id,
-      // Solo si es UUID válido
       product_id: isUUID(item.productId) ? item.productId : null,
       quantity: item.quantity,
       selected_options: item.selectedOptions,
@@ -95,7 +126,6 @@ const submitOrder = async () => {
       duration: 4000
     })
 
-    // Redirect to history
     navigateTo(`/historial?success=${order.plate_code}`)
   } catch (e: any) {
     const errorMsg = e.message || 'Error al crear el pedido'
@@ -116,13 +146,15 @@ const submitOrder = async () => {
 <template>
   <div class="max-w-2xl mx-auto">
     <!-- Header -->
-    <div class="mb-8">
-      <NuxtLink to="/carrito"
-        class="text-heat-orange text-sm font-semibold hover:underline mb-4 inline-flex items-center gap-1">
+    <div class="mb-6">
+      <NuxtLink 
+        to="/"
+        class="text-heat-orange text-sm font-semibold hover:underline mb-4 inline-flex items-center gap-1"
+      >
         <span class="i-lucide-chevron-left" />
-        Volver al carrito
+        Volver al menú
       </NuxtLink>
-      <h1 class="text-3xl font-extrabold text-heat-black">
+      <h1 class="text-2xl font-extrabold text-heat-black">
         Confirmar Pedido
       </h1>
     </div>
@@ -133,90 +165,154 @@ const submitOrder = async () => {
       {{ error }}
     </div>
 
-    <!-- Order Summary -->
+    <!-- Delivery Mode Selection -->
     <GummyCard padding="lg" class="mb-6">
-      <h2 class="font-bold text-heat-black mb-4">Resumen del Pedido</h2>
+      <h2 class="font-bold text-heat-black mb-4 flex items-center gap-2">
+        <span class="i-lucide-map-pin text-heat-orange" />
+        ¿Cómo lo quieres?
+      </h2>
+      
+      <DeliveryModeSelector
+        :mode="mode"
+        :table-number="tableNumber"
+        :delivery-address="deliveryAddress"
+        :pickup-time="pickupTime"
+        :pickup-notes="pickupNotes"
+        :delivery-notes="deliveryNotes"
+        @update:mode="setMode"
+        @update:table-number="setTable"
+        @update:delivery-address="deliveryAddress = $event"
+        @update:pickup-time="pickupTime = $event"
+        @update:pickup-notes="pickupNotes = $event"
+        @update:delivery-notes="deliveryNotes = $event"
+      />
+    </GummyCard>
 
-      <div class="space-y-3 mb-4">
-        <div v-for="item in cartStore.items" :key="item.id" class="flex justify-between text-sm">
-          <div>
-            <span class="font-semibold">{{ item.quantity }}x</span>
-            <span class="ml-2">{{ item.productName }}</span>
-            <p v-if="item.selectedOptions.length > 0" class="text-xs text-heat-gray-dark ml-5">
-              {{item.selectedOptions.map(o => o.name).join(', ')}}
+    <!-- Order Summary (Compact) -->
+    <GummyCard padding="lg" class="mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-bold text-heat-black flex items-center gap-2">
+          <span class="i-lucide-shopping-bag text-heat-orange" />
+          Tu Pedido
+        </h2>
+        <span class="text-sm text-heat-gray-dark">{{ cartStore.itemCount }} items</span>
+      </div>
+
+      <!-- Items (compact list) -->
+      <div class="space-y-2 mb-4">
+        <div 
+          v-for="item in cartStore.items" 
+          :key="item.id" 
+          class="flex items-start gap-2 text-sm"
+        >
+          <span class="text-heat-orange font-bold">{{ item.quantity }}×</span>
+          <div class="flex-1">
+            <span class="text-heat-black">{{ item.productName }}</span>
+            <p v-if="item.selectedOptions.length > 0" class="text-xs text-heat-gray-dark">
+              {{ item.selectedOptions.map(o => o.name).join(', ') }}
             </p>
           </div>
         </div>
       </div>
 
-      <hr class="border-heat-gray-medium/30 my-4" />
-
-      <div class="flex justify-between text-lg">
-        <span class="font-bold">Total a Pagar</span>
-        <span class="font-extrabold text-heat-gray-dark">{{ cartStore.formattedTotal }}</span>
+      <!-- Totals -->
+      <div class="pt-4 border-t border-heat-gray-medium/30 space-y-2">
+        <div class="flex justify-between text-sm text-heat-gray-dark">
+          <span>Subtotal</span>
+          <span>{{ cartStore.formattedSubtotal }}</span>
+        </div>
+        <div v-if="deliveryFee > 0" class="flex justify-between text-sm text-heat-gray-dark">
+          <span>Envío</span>
+          <span>{{ new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(deliveryFee) }}</span>
+        </div>
+        <div v-else class="flex justify-between text-sm text-green-600">
+          <span>Envío</span>
+          <span class="font-semibold">Gratis</span>
+        </div>
+        <div class="flex justify-between text-lg font-bold pt-2">
+          <span>Total</span>
+          <span class="text-heat-orange">{{ formattedTotal }}</span>
+        </div>
       </div>
     </GummyCard>
 
-    <!-- Delivery Info -->
+    <!-- Additional Notes -->
     <GummyCard padding="lg" class="mb-6">
+      <h2 class="font-bold text-heat-black mb-4 flex items-center gap-2">
+        <span class="i-lucide-message-square text-heat-orange" />
+        Notas adicionales
+        <span class="text-heat-gray-dark font-normal text-sm">(opcional)</span>
+      </h2>
+      <textarea
+        v-model="additionalNotes"
+        rows="2"
+        class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none resize-none"
+        placeholder="Alergias, instrucciones especiales, etc."
+      />
+    </GummyCard>
+
+    <!-- Contact Info (from profile) -->
+    <GummyCard v-if="profile" padding="lg" class="mb-6">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="font-bold text-heat-black">Información de Entrega</h2>
-        <NuxtLink v-if="hasCompleteProfile" to="/perfil"
-          class="text-sm text-heat-orange hover:underline flex items-center gap-1">
+        <h2 class="font-bold text-heat-black flex items-center gap-2">
+          <span class="i-lucide-user text-heat-orange" />
+          Contacto
+        </h2>
+        <NuxtLink 
+          to="/perfil"
+          class="text-sm text-heat-orange hover:underline flex items-center gap-1"
+        >
           <span class="i-lucide-edit text-sm" />
-          Editar perfil
+          Editar
         </NuxtLink>
       </div>
-
-      <form class="space-y-4" @submit.prevent="submitOrder">
-        <div>
-          <label class="block text-sm font-semibold text-heat-black mb-2">
-            Nombre
-          </label>
-          <input v-model="deliveryInfo.name" type="text" required :readonly="hasCompleteProfile && !!profile?.name"
-            :class="hasCompleteProfile && !!profile?.name ? 'bg-heat-gray-soft/50 cursor-not-allowed' : 'bg-heat-gray-soft'"
-            class="w-full px-4 py-3 rounded-gummy border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none"
-            placeholder="Tu nombre" />
+      
+      <div class="space-y-2 text-sm">
+        <div class="flex items-center gap-2">
+          <span class="i-lucide-user text-heat-gray-medium" />
+          <span>{{ profile.name || 'Sin nombre' }}</span>
         </div>
-
-        <div>
-          <label class="block text-sm font-semibold text-heat-black mb-2">
-            Teléfono
-          </label>
-          <input v-model="deliveryInfo.phone" type="tel" required :readonly="hasCompleteProfile && !!profile?.phone"
-            :class="hasCompleteProfile && !!profile?.phone ? 'bg-heat-gray-soft/50 cursor-not-allowed' : 'bg-heat-gray-soft'"
-            class="w-full px-4 py-3 rounded-gummy border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none"
-            placeholder="+57 314-368-6786" />
+        <div class="flex items-center gap-2">
+          <span class="i-lucide-phone text-heat-gray-medium" />
+          <span :class="profile.phone ? '' : 'text-red-500'">
+            {{ profile.phone || '⚠️ Teléfono requerido' }}
+          </span>
         </div>
-
-        <div>
-          <label class="block text-sm font-semibold text-heat-black mb-2">
-            Dirección <span class="text-heat-gray-dark font-normal">(opcional)</span>
-          </label>
-          <textarea v-model="deliveryInfo.address" rows="2"
-            class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none resize-none"
-            placeholder="Tu dirección" />
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold text-heat-black mb-2">
-            Notas adicionales <span class="text-heat-gray-dark font-normal">(opcional)</span>
-          </label>
-          <textarea v-model="deliveryInfo.notes" rows="2"
-            class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none resize-none"
-            placeholder="Instrucciones especiales, alergias, etc." />
-        </div>
-
-        <GummyButton type="submit" variant="primary" size="lg" class="w-full mt-6" :loading="isSubmitting"
-          :disabled="cartStore.isEmpty">
-          <span class="i-lucide-check mr-2" />
-          Confirmar Pedido
-        </GummyButton>
-      </form>
+      </div>
     </GummyCard>
 
+    <!-- Submit Button -->
+    <GummyButton
+      type="button"
+      variant="primary"
+      size="lg"
+      class="w-full"
+      :loading="isSubmitting"
+      :disabled="!canSubmit"
+      @click="submitOrder"
+    >
+      <span class="i-lucide-check mr-2" />
+      Confirmar Pedido
+    </GummyButton>
+
+    <!-- Validation hints -->
+    <div v-if="!canSubmit" class="mt-4 text-center text-sm text-heat-gray-dark">
+      <p v-if="!isDeliveryValid && mode === 'local'">
+        <span class="i-lucide-info text-heat-orange" />
+        Selecciona una mesa para continuar
+      </p>
+      <p v-else-if="!isDeliveryValid && mode === 'delivery'">
+        <span class="i-lucide-info text-heat-orange" />
+        Ingresa tu dirección para continuar
+      </p>
+      <p v-else-if="!profile?.phone">
+        <span class="i-lucide-info text-heat-orange" />
+        Completa tu perfil con tu teléfono
+      </p>
+    </div>
+
     <!-- Payment Note -->
-    <p class="text-center text-sm text-heat-gray-dark">
+    <p class="text-center text-sm text-heat-gray-dark mt-6">
       El pago se realiza al momento de la entrega
     </p>
   </div>

@@ -109,15 +109,17 @@ onMounted(() => {
           v-if="cartStore.items.length > 0"
           class="p-4 border-t border-heat-gray-medium/30 bg-heat-gray-soft/50 shrink-0"
         >
-          <!-- Summary -->
-          <div class="space-y-1 mb-4">
-            <div class="flex justify-between text-sm text-heat-gray-dark">
-              <span>Subtotal</span>
-              <span>{{ cartStore.formattedSubtotal }}</span>
+          <!-- Summary (simplified) -->
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <span class="text-sm text-heat-gray-dark">{{ cartStore.itemCount }} productos</span>
+              <p class="text-lg font-bold text-heat-orange">{{ cartStore.formattedTotal }}</p>
             </div>
-            <div class="flex justify-between font-bold text-lg">
-              <span>Total</span>
-              <span class="text-heat-orange">{{ cartStore.formattedTotal }}</span>
+            <div class="text-right">
+              <span class="text-xs text-green-600 font-medium flex items-center gap-1">
+                <span class="i-lucide-truck text-sm" />
+                Envío gratis en local
+              </span>
             </div>
           </div>
           
@@ -127,7 +129,8 @@ onMounted(() => {
             class="btn-primary w-full text-center block"
             @click="closeDrawer"
           >
-            Proceder al Pago
+            <span class="i-lucide-arrow-right mr-2" />
+            Continuar
           </NuxtLink>
         </footer>
       </aside>
