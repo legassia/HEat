@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useCartStore } from '~/features/cart/store/cart.store'
 import { useDeliveryStore } from '~/features/cart/stores/delivery.store'
-import { useProfile } from '~/features/user/composables/useProfile'
+import { useProfileStore } from '~/features/user/stores/profile.store'
 import CartItem from '~/features/cart/components/CartItem.vue'
 import DeliveryModeSelector from '~/features/cart/components/DeliveryModeSelector.vue'
 
@@ -11,15 +11,12 @@ useHead({
 
 const cartStore = useCartStore()
 const deliveryStore = useDeliveryStore()
+const profileStore = useProfileStore()
 const router = useRouter()
-const { profile, fetchProfile } = useProfile()
 
 // Load profile on mount
 onMounted(async () => {
-  await fetchProfile()
-  if (profile.value?.address) {
-    deliveryStore.loadFromProfile(profile.value)
-  }
+  await profileStore.fetchProfile()
 })
 
 // Redirect to home if cart is empty
@@ -36,8 +33,15 @@ const formattedTotal = computed(() =>
     .format(totalWithDelivery.value)
 )
 
+// Validation for checkout
+const canProceed = computed(() => {
+  if (!deliveryStore.isValidBasic) return false
+  if (deliveryStore.mode === 'delivery' && !profileStore.hasAddress) return false
+  return true
+})
+
 const proceedToCheckout = () => {
-  if (!deliveryStore.isValid) return
+  if (!canProceed.value) return
   navigateTo('/checkout')
 }
 </script>
@@ -98,13 +102,12 @@ const proceedToCheckout = () => {
         <DeliveryModeSelector
           :mode="deliveryStore.mode"
           :selected-tables="deliveryStore.tablesSet"
-          :delivery-address="deliveryStore.deliveryAddress"
+          :delivery-address="profileStore.profile?.address || ''"
           :pickup-time="deliveryStore.pickupTime"
           :pickup-notes="deliveryStore.pickupNotes"
           :delivery-notes="deliveryStore.deliveryNotes"
           @update:mode="deliveryStore.setMode"
           @toggle-table="deliveryStore.toggleTable"
-          @update:delivery-address="deliveryStore.deliveryAddress = $event"
           @update:pickup-time="deliveryStore.pickupTime = $event"
           @update:pickup-notes="deliveryStore.pickupNotes = $event"
           @update:delivery-notes="deliveryStore.deliveryNotes = $event"
@@ -144,7 +147,7 @@ const proceedToCheckout = () => {
         variant="primary" 
         size="lg" 
         class="w-full" 
-        :disabled="!deliveryStore.isValid"
+        :disabled="!canProceed"
         @click="proceedToCheckout"
       >
         Generar Orden
@@ -152,10 +155,14 @@ const proceedToCheckout = () => {
       </GummyButton>
 
       <!-- Validation hint -->
-      <p v-if="!deliveryStore.isValid" class="text-center text-sm text-heat-gray-dark mt-3">
+      <p v-if="!canProceed" class="text-center text-sm text-heat-gray-dark mt-3">
         <span class="i-lucide-info text-heat-orange" />
-        <span v-if="deliveryStore.mode === 'local'">Selecciona al menos una mesa</span>
-        <span v-else-if="deliveryStore.mode === 'delivery'">Ingresa tu dirección de entrega</span>
+        <span v-if="deliveryStore.mode === 'local' && deliveryStore.selectedTables.length === 0">
+          Selecciona al menos una mesa
+        </span>
+        <span v-else-if="deliveryStore.mode === 'delivery' && !profileStore.hasAddress">
+          Ingresa tu dirección de entrega
+        </span>
       </p>
 
       <!-- Continue Shopping -->

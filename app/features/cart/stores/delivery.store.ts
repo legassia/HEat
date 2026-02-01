@@ -7,7 +7,6 @@ export interface DeliveryConfig {
   tables?: number[]
   pickupTime?: string
   pickupNotes?: string
-  address?: string
   deliveryNotes?: string
 }
 
@@ -39,7 +38,6 @@ interface DeliveryState {
   selectedTables: number[]
   pickupTime: string
   pickupNotes: string
-  deliveryAddress: string
   deliveryNotes: string
 }
 
@@ -49,7 +47,6 @@ export const useDeliveryStore = defineStore('delivery', {
     selectedTables: [getRandomTable() ?? 1],
     pickupTime: '',
     pickupNotes: '',
-    deliveryAddress: '',
     deliveryNotes: ''
   }),
 
@@ -58,14 +55,14 @@ export const useDeliveryStore = defineStore('delivery', {
     
     tablesSet: (state) => new Set(state.selectedTables),
     
-    isValid: (state) => {
+    // Basic validation (address validation handled in component with profile)
+    isValidBasic: (state) => {
       switch (state.mode) {
         case 'local':
           return state.selectedTables.length > 0
         case 'pickup':
-          return true
         case 'delivery':
-          return state.deliveryAddress.trim().length > 0
+          return true // Address checked separately from profile
         default:
           return false
       }
@@ -76,42 +73,8 @@ export const useDeliveryStore = defineStore('delivery', {
       tables: state.mode === 'local' ? [...state.selectedTables].sort((a, b) => a - b) : undefined,
       pickupTime: state.mode === 'pickup' ? state.pickupTime : undefined,
       pickupNotes: state.mode === 'pickup' ? state.pickupNotes : undefined,
-      address: state.mode === 'delivery' ? state.deliveryAddress : undefined,
       deliveryNotes: state.mode === 'delivery' ? state.deliveryNotes : undefined
-    }),
-
-    buildOrderNotes: (state): string => {
-      const parts: string[] = []
-      
-      switch (state.mode) {
-        case 'local':
-          if (state.selectedTables.length > 0) {
-            const tables = [...state.selectedTables].sort((a, b) => a - b).join(', ')
-            parts.push(`🍽️ Mesa${state.selectedTables.length > 1 ? 's' : ''} ${tables}`)
-          }
-          break
-        case 'pickup':
-          parts.push('📦 Para recoger')
-          if (state.pickupTime) {
-            parts.push(`⏰ Hora: ${state.pickupTime}`)
-          }
-          if (state.pickupNotes) {
-            parts.push(state.pickupNotes)
-          }
-          break
-        case 'delivery':
-          parts.push('🚴 Domicilio')
-          if (state.deliveryAddress) {
-            parts.push(`📍 ${state.deliveryAddress}`)
-          }
-          if (state.deliveryNotes) {
-            parts.push(state.deliveryNotes)
-          }
-          break
-      }
-      
-      return parts.join('\n')
-    }
+    })
   },
 
   actions: {
@@ -122,7 +85,6 @@ export const useDeliveryStore = defineStore('delivery', {
     toggleTable(table: number) {
       const index = this.selectedTables.indexOf(table)
       if (index > -1) {
-        // Don't remove the last table
         if (this.selectedTables.length > 1) {
           this.selectedTables.splice(index, 1)
         }
@@ -131,10 +93,38 @@ export const useDeliveryStore = defineStore('delivery', {
       }
     },
 
-    loadFromProfile(profile: { address?: string | null }) {
-      if (profile.address) {
-        this.deliveryAddress = profile.address
+    // Build order notes - address passed from profile
+    buildOrderNotes(profileAddress?: string | null): string {
+      const parts: string[] = []
+      
+      switch (this.mode) {
+        case 'local':
+          if (this.selectedTables.length > 0) {
+            const tables = [...this.selectedTables].sort((a, b) => a - b).join(', ')
+            parts.push(`🍽️ Mesa${this.selectedTables.length > 1 ? 's' : ''} ${tables}`)
+          }
+          break
+        case 'pickup':
+          parts.push('📦 Para recoger')
+          if (this.pickupTime) {
+            parts.push(`⏰ Hora: ${this.pickupTime}`)
+          }
+          if (this.pickupNotes) {
+            parts.push(this.pickupNotes)
+          }
+          break
+        case 'delivery':
+          parts.push('🚴 Domicilio')
+          if (profileAddress) {
+            parts.push(`📍 ${profileAddress}`)
+          }
+          if (this.deliveryNotes) {
+            parts.push(this.deliveryNotes)
+          }
+          break
       }
+      
+      return parts.join('\n')
     },
 
     reset() {
@@ -142,7 +132,6 @@ export const useDeliveryStore = defineStore('delivery', {
       this.selectedTables = [getRandomTable() ?? 1]
       this.pickupTime = ''
       this.pickupNotes = ''
-      this.deliveryAddress = ''
       this.deliveryNotes = ''
     }
   }

@@ -12,6 +12,7 @@ const profileStore = useProfileStore()
 
 const isEditing = ref(false)
 const isSaving = ref(false)
+const isGettingLocation = ref(false)
 
 // Local form state (editable copy)
 const formData = ref({
@@ -19,6 +20,60 @@ const formData = ref({
   phone: '',
   address: ''
 })
+
+// Geolocation
+const getLocation = async () => {
+  if (!navigator.geolocation) {
+    toast.error('Tu navegador no soporta geolocalización')
+    return
+  }
+
+  isGettingLocation.value = true
+  
+  try {
+    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      })
+    })
+
+    const { latitude, longitude } = position.coords
+    
+    // Get address from coordinates using Nominatim
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+        { headers: { 'Accept-Language': 'es' } }
+      )
+      const data = await response.json()
+      
+      if (data.display_name) {
+        const address = data.display_name.split(',').slice(0, 4).join(', ')
+        formData.value.address = address
+        toast.success('Ubicación detectada', {
+          description: address.slice(0, 50) + (address.length > 50 ? '...' : '')
+        })
+      } else {
+        formData.value.address = `📍 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+        toast.info('Coordenadas guardadas')
+      }
+    } catch {
+      formData.value.address = `📍 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+      toast.info('Coordenadas guardadas')
+    }
+  } catch (error: any) {
+    const msgs: Record<number, string> = {
+      1: 'Permiso de ubicación denegado',
+      2: 'Ubicación no disponible',
+      3: 'Tiempo de espera agotado'
+    }
+    toast.error(msgs[error.code] || 'Error al obtener ubicación')
+  } finally {
+    isGettingLocation.value = false
+  }
+}
 
 // Fetch profile on mount
 onMounted(async () => {
@@ -151,9 +206,9 @@ const logout = async () => {
             <!-- Emoji avatar (default fallback) -->
             <div 
               v-else 
-              class="w-full h-full flex items-center justify-center bg-gradient-to-br from-heat-orange to-heat-pink"
+              class="w-full h-full flex items-center justify-center bg-gradient-to-br from-heat-orange to-heat-white"
             >
-              <span class="text-5xl">{{ profileStore.displayEmoji }}</span>
+              <span class="text-7xl">{{ profileStore.displayEmoji }}</span>
             </div>
           </div>
         </div>
@@ -217,13 +272,32 @@ const logout = async () => {
             <label class="block text-sm font-semibold text-heat-black mb-2">
               Dirección de entrega
             </label>
+            
+            <!-- Geolocation button (only when editing) -->
+            <button
+              v-if="isEditing"
+              type="button"
+              class="w-full mb-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-gummy border-2 border-dashed border-heat-cyan/50 text-heat-cyan hover:bg-heat-cyan/5 transition-colors disabled:opacity-50"
+              :disabled="isGettingLocation"
+              @click="getLocation"
+            >
+              <span v-if="isGettingLocation" class="i-lucide-loader-2 animate-spin" />
+              <span v-else class="i-lucide-map-pin" />
+              <span class="text-sm font-medium">
+                {{ isGettingLocation ? 'Obteniendo ubicación...' : 'Usar mi ubicación actual' }}
+              </span>
+            </button>
+
             <textarea 
               v-model="formData.address"
               :disabled="!isEditing"
               rows="3"
               class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60 resize-none"
-              placeholder="Calle, número, barrio, referencias..."
+              placeholder="Calle, número, barrio, piso, referencias..."
             />
+            <p v-if="isEditing" class="text-xs text-heat-gray-dark mt-1">
+              Necesaria para pedidos a domicilio
+            </p>
           </div>
           
           <!-- Actions -->

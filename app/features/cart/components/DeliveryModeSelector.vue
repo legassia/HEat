@@ -13,7 +13,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:mode': [mode: DeliveryMode]
   'toggleTable': [table: number]
-  'update:deliveryAddress': [address: string]
   'update:pickupTime': [time: string]
   'update:pickupNotes': [notes: string]
   'update:deliveryNotes': [notes: string]
@@ -112,34 +111,56 @@ const modes: DeliveryMode[] = ['local', 'pickup', 'delivery']
         </div>
       </div>
 
-      <!-- DELIVERY: Address and Notes -->
+      <!-- DELIVERY: Shows address from profile (read-only) -->
       <div v-else-if="mode === 'delivery'" class="space-y-4">
         <div class="p-4 rounded-gummy bg-orange-50 border border-orange-200">
           <div class="flex items-center gap-2 text-orange-700">
             <span class="i-lucide-bike text-lg" />
-            <span class="font-semibold">Coste asociado</span>
+            <span class="font-semibold">Envío a domicilio</span>
           </div>
           <p class="text-sm text-orange-600 mt-1">
             Disponible en el sector de Villa Adriana
           </p>
         </div>
 
-        <div>
-          <label class="block text-sm font-semibold text-heat-black mb-2">
-            Dirección de entrega
-            <span class="text-red-500">*</span>
-          </label>
-          <textarea
-            :value="deliveryAddress"
-            rows="2"
-            required
-            class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none resize-none"
-            placeholder="Calle, número, barrio, referencias..."
-            @input="emit('update:deliveryAddress', ($event.target as HTMLTextAreaElement).value)"
-          />
+        <!-- Address display (from profile) -->
+        <div v-if="deliveryAddress" class="p-4 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/30">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start gap-2">
+              <span class="i-lucide-map-pin text-heat-orange mt-0.5" />
+              <div>
+                <p class="text-sm font-medium text-heat-black">{{ deliveryAddress }}</p>
+                <p class="text-xs text-heat-gray-dark mt-1">Dirección guardada en tu perfil</p>
+              </div>
+            </div>
+            <NuxtLink 
+              to="/perfil" 
+              class="text-xs text-heat-orange hover:underline flex items-center gap-1 shrink-0"
+            >
+              <span class="i-lucide-pencil" />
+              Editar
+            </NuxtLink>
+          </div>
         </div>
 
-        <div>
+        <!-- No address warning -->
+        <div v-else class="p-4 rounded-gummy bg-red-50 border border-red-200">
+          <div class="flex items-center gap-2 text-red-700">
+            <span class="i-lucide-alert-circle text-lg" />
+            <span class="font-semibold">Dirección requerida</span>
+          </div>
+          <p class="text-sm text-red-600 mt-1">
+            Agrega tu dirección en tu perfil para pedir a domicilio
+          </p>
+          <NuxtLink to="/perfil">
+            <button class="mt-3 px-4 py-2 rounded-gummy bg-red-100 text-red-700 text-sm font-semibold hover:bg-red-200 transition-colors">
+              Ir a mi perfil
+            </button>
+          </NuxtLink>
+        </div>
+
+        <!-- Delivery notes (optional) -->
+        <div v-if="deliveryAddress">
           <label class="block text-sm font-semibold text-heat-black mb-2">
             Instrucciones de entrega
             <span class="text-heat-gray-dark font-normal">(opcional)</span>

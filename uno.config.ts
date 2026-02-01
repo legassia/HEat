@@ -135,6 +135,7 @@ export default defineConfig({
     'i-lucide-alert-circle',
     'i-lucide-info',
     'i-lucide-check-circle',
+    'i-lucide-circle',
     // TTS & Orders
     'i-lucide-volume-2',
     'i-lucide-square',

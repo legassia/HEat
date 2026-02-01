@@ -64,8 +64,9 @@ const formattedTotal = computed(() =>
 // Check if can submit
 const canSubmit = computed(() => {
   if (cartStore.isEmpty) return false
-  if (!deliveryStore.isValid) return false
+  if (!deliveryStore.isValidBasic) return false
   if (!profileStore.hasPhone) return false
+  if (deliveryStore.mode === 'delivery' && !profileStore.hasAddress) return false
   return true
 })
 
@@ -78,7 +79,7 @@ const deliverySummary = computed(() => {
     case 'pickup':
       return deliveryStore.pickupTime ? `Recoger a las ${deliveryStore.pickupTime}` : 'Para recoger'
     case 'delivery':
-      return deliveryStore.deliveryAddress || 'Domicilio'
+      return profileStore.profile?.address || 'Domicilio'
     default:
       return ''
   }
@@ -105,7 +106,7 @@ const submitOrder = async () => {
 
   try {
     // Build complete notes
-    const notesParts = [deliveryStore.buildOrderNotes]
+    const notesParts = [deliveryStore.buildOrderNotes(profileStore.profile?.address)]
     if (additionalNotes.value) {
       notesParts.push(`📝 ${additionalNotes.value}`)
     }
