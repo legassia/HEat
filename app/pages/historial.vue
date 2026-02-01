@@ -59,7 +59,7 @@ const filteredOrders = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-6 overflow-x-hidden">
     <!-- Header -->
     <div>
       <h1 class="text-3xl font-extrabold text-heat-black mb-2">

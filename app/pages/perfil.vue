@@ -150,7 +150,7 @@ const logout = async () => {
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto space-y-8">
+  <div class="max-w-2xl mx-auto space-y-8 overflow-x-hidden">
     <!-- Header -->
     <div class="text-center">
       <h1 class="text-3xl font-extrabold text-heat-black mb-2">

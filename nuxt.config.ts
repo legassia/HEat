@@ -75,6 +75,7 @@ export default defineNuxtConfig({
     head: {
       title: 'HEat - Pedidos de Comida',
       meta: [
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' },
         { name: 'description', content: 'Pide tus arepas, perros y hamburguesas favoritas' },
         { name: 'theme-color', content: '#FF6B35' }
       ],

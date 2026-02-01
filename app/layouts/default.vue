@@ -2,8 +2,8 @@
 const route = useRoute()
 
 const navItems = [
-  { path: '/', label: 'Inicio', icon: 'i-lucide-home' },
   { path: '/avisos', label: 'Avisos', icon: 'i-lucide-megaphone' },
+  { path: '/', label: 'Inicio', icon: 'i-lucide-home' },
   { path: '/carrito', label: 'Carrito', icon: 'i-lucide-shopping-cart' },
   { path: '/historial', label: 'Historial', icon: 'i-lucide-history' },
   { path: '/perfil', label: 'Perfil', icon: 'i-lucide-user' }
@@ -16,12 +16,12 @@ const isActive = (path: string) => {
 </script>
 
 <template>
-  <div class="min-h-screen min-h-[100dvh] bg-heat-gray-soft">
+  <div class="min-h-[100dvh] bg-heat-gray-soft flex flex-col">
     <!-- Header (Desktop only) -->
     <AppHeader class="hidden lg:flex" />
     
     <!-- Main Layout -->
-    <div class="flex">
+    <div class="flex flex-1">
       <!-- SideNav (Desktop only) -->
       <SideNav 
         :items="navItems" 
@@ -31,7 +31,7 @@ const isActive = (path: string) => {
       
       <!-- Main Content -->
       <main 
-        class="flex-1 min-h-screen pb-[var(--bottom-nav-height)] lg:pb-0 lg:ml-[var(--sidenav-width)] lg:pt-[var(--nav-height)]"
+        class="flex-1 pb-[var(--bottom-nav-height)] lg:pb-0 lg:ml-[var(--sidenav-width)] lg:pt-[var(--nav-height)]"
       >
         <div class="max-w-7xl mx-auto px-4 py-6 lg:px-8">
           <slot />
