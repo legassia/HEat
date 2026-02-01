@@ -8,7 +8,7 @@ interface OrderItem {
 
 interface Order {
   id: string
-  status: 'pending' | 'cooking' | 'ready' | 'delivered' | 'cancelled'
+  status: 'pending' | 'cooking' | 'ready' | 'delivered' | 'paid' | 'cancelled'
   items: OrderItem[]
 }
 

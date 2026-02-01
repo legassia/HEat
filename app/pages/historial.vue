@@ -10,7 +10,7 @@ useHead({
   title: 'HEat - Historial de Pedidos'
 })
 
-const { orders, isLoading, error, fetchOrders, subscribeToUpdates } = useOrderHistory()
+const { orders, isLoading, error, isAdmin, fetchOrders, subscribeToUpdates } = useOrderHistory()
 
 // Subscribe to realtime updates
 let unsubscribe: (() => void) | null = null
@@ -24,19 +24,37 @@ onUnmounted(() => {
   if (unsubscribe) unsubscribe()
 })
 
-const statusFilters = [
-  { value: 'all', label: 'Todos' },
-  { value: 'pending', label: 'Pendiente' },
-  { value: 'cooking', label: 'Cocinando' },
-  { value: 'ready', label: 'Listo' },
-  { value: 'delivered', label: 'Entregado' }
+// Multi-select status filters
+import { type OrderStatus, statusConfig } from '~/features/orders/composables/useOrderStatus'
+
+const statusFilters: Array<{ value: OrderStatus; label: string; icon: string }> = [
+  { value: 'pending', label: 'Pendiente', icon: 'i-lucide-clock' },
+  { value: 'cooking', label: 'Cocinando', icon: 'i-lucide-flame' },
+  { value: 'ready', label: 'Listo', icon: 'i-lucide-check-circle' },
+  { value: 'delivered', label: 'Entregado', icon: 'i-lucide-hand-coins' },
+  { value: 'paid', label: 'Pagado', icon: 'i-lucide-badge-dollar-sign' },
+  { value: 'cancelled', label: 'Cancelado', icon: 'i-lucide-x-circle' }
 ]
 
-const selectedFilter = ref('all')
+// Default: active orders (not paid, not cancelled)
+const activeFilters = ref<Set<OrderStatus>>(new Set(['pending', 'cooking', 'ready', 'delivered']))
+
+const toggleFilter = (status: OrderStatus) => {
+  if (activeFilters.value.has(status)) {
+    activeFilters.value.delete(status)
+  } else {
+    activeFilters.value.add(status)
+  }
+  // Trigger reactivity
+  activeFilters.value = new Set(activeFilters.value)
+}
 
 const filteredOrders = computed(() => {
-  if (selectedFilter.value === 'all') return orders.value
-  return orders.value.filter(order => order.status === selectedFilter.value)
+  // If nothing selected, show cancelled (archived)
+  if (activeFilters.value.size === 0) {
+    return orders.value.filter(o => o.status === 'cancelled')
+  }
+  return orders.value.filter(order => activeFilters.value.has(order.status as OrderStatus))
 })
 </script>
 
@@ -72,18 +90,19 @@ const filteredOrders = computed(() => {
     </div>
     
     <template v-else>
-      <!-- Filters -->
-      <div class="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 lg:mx-0 lg:px-0">
+      <!-- Status Filters (multi-select toggles) -->
+      <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
         <button 
           v-for="filter in statusFilters"
           :key="filter.value"
-          class="px-4 py-2 rounded-gummy text-sm font-semibold whitespace-nowrap transition-all"
-          :class="selectedFilter === filter.value 
-            ? 'gradient-orange text-white shadow-gummy' 
-            : 'bg-heat-white text-heat-gray-dark hover:bg-heat-orange/10'"
-          @click="selectedFilter = filter.value"
+          class="flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-gummy text-xs sm:text-sm font-semibold transition-all"
+          :class="activeFilters.has(filter.value) 
+            ? 'gradient-orange text-white shadow-gummy'
+            : 'bg-heat-white text-heat-gray-dark hover:bg-heat-orange/10 border border-heat-gray-medium/30'"
+          @click="toggleFilter(filter.value)"
         >
-          {{ filter.label }}
+          <span :class="filter.icon" class="text-base" />
+          <span class="hidden sm:inline">{{ filter.label }}</span>
         </button>
       </div>
       
@@ -109,11 +128,11 @@ const filteredOrders = computed(() => {
           No hay pedidos
         </h2>
         <p class="text-heat-gray-dark mb-6">
-          {{ selectedFilter === 'all' 
+          {{ orders.length === 0 
             ? 'Aún no has realizado ningún pedido' 
-            : 'No hay pedidos con este estado' }}
+            : 'No hay pedidos con los filtros seleccionados' }}
         </p>
-        <GummyButton variant="primary" @click="navigateTo('/')">
+        <GummyButton v-if="orders.length === 0" variant="primary" @click="navigateTo('/')">
           Hacer mi primer pedido
         </GummyButton>
       </div>

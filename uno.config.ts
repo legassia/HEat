@@ -134,6 +134,18 @@ export default defineConfig({
     'i-lucide-alert-triangle',
     'i-lucide-flame',
     'i-lucide-package-check',
-    'i-lucide-x-circle'
+    'i-lucide-x-circle',
+    'i-lucide-hand-coins',
+    'i-lucide-badge-dollar-sign',
+    'i-lucide-chef-hat',
+    // Order status badge colors (dynamic classes)
+    'bg-yellow-100', 'text-yellow-700',
+    'bg-orange-100', 'text-orange-700',
+    'bg-cyan-100', 'text-cyan-700',
+    'bg-red-100', 'text-red-700',
+    'bg-red-50/40',
+    'bg-emerald-100', 'text-emerald-700',
+    'bg-emerald-50/40',
+    'bg-gray-100', 'text-gray-500'
   ]
 })

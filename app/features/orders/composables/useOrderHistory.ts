@@ -12,10 +12,12 @@ export interface OrderItem {
   selectedOptions?: Array<{ name: string; quantity: number }>
 }
 
+export type OrderStatus = 'pending' | 'cooking' | 'ready' | 'delivered' | 'paid' | 'cancelled'
+
 export interface Order {
   id: string
   plateCode: string
-  status: 'pending' | 'cooking' | 'ready' | 'delivered' | 'cancelled'
+  status: OrderStatus
   createdAt: Date
   total: number
   items: OrderItem[]
@@ -32,6 +34,7 @@ export function useOrderHistory() {
   const orders = ref<Order[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+  const isAdmin = ref(false)
 
   const fetchOrders = async () => {
     // Get fresh session to ensure we have the latest auth state
@@ -47,7 +50,18 @@ export function useOrderHistory() {
     error.value = null
 
     try {
-      const { data, error: fetchError } = await supabase
+      // Check if user is admin (use any to avoid strict typing issues with role column)
+      const { data: profile } = await (supabase as any)
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single()
+      
+      const userRole = profile?.role as string | undefined
+      isAdmin.value = userRole === 'admin' || userRole === 'dev'
+
+      // Build query - admins see all, customers see only their own
+      let query = supabase
         .from('orders')
         .select(`
           *,
@@ -58,8 +72,14 @@ export function useOrderHistory() {
             selected_options,
             products ( id, name, category )
           )
-        `).eq('user_id', userId)
-        .order('created_at', { ascending: false })
+        `)
+      
+      // Only filter by user_id for non-admins
+      if (!isAdmin.value) {
+        query = query.eq('user_id', userId)
+      }
+      
+      const { data, error: fetchError } = await query.order('created_at', { ascending: false })
 
       if (fetchError) throw fetchError
 
@@ -68,7 +88,7 @@ export function useOrderHistory() {
       orders.value = (typedData || []).map(order => ({
         id: order.id,
         plateCode: order.plate_code,
-        status: order.status,
+        status: order.status as OrderStatus,
         createdAt: new Date(order.created_at),
         total: Number(order.total),
         items: order.order_items.map(item => {
@@ -99,24 +119,20 @@ export function useOrderHistory() {
     
     if (!userId) return null
 
+    // Admins subscribe to all orders, customers only to their own
+    const channelConfig = isAdmin.value
+      ? { event: 'UPDATE' as const, schema: 'public', table: 'orders' }
+      : { event: 'UPDATE' as const, schema: 'public', table: 'orders', filter: `user_id=eq.${userId}` }
+
     const channel = supabase
       .channel('order-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'orders',
-          filter: `user_id=eq.${userId}`
-        },
-        (payload) => {
-          const updated = payload.new as OrderRow
-          const existingOrder = orders.value.find(o => o.id === updated.id)
-          if (existingOrder) {
-            existingOrder.status = updated.status
-          }
+      .on('postgres_changes', channelConfig, (payload) => {
+        const updated = payload.new as OrderRow
+        const existingOrder = orders.value.find(o => o.id === updated.id)
+        if (existingOrder) {
+          existingOrder.status = updated.status
         }
-      )
+      })
       .subscribe()
 
     return () => {
@@ -127,8 +143,8 @@ export function useOrderHistory() {
   // Watch for user logout to clear orders
   watch(() => user.value?.id, (newId, oldId) => {
     if (!newId && oldId) {
-      // User logged out
       orders.value = []
+      isAdmin.value = false
     }
   })
 
@@ -136,6 +152,7 @@ export function useOrderHistory() {
     orders: readonly(orders),
     isLoading: readonly(isLoading),
     error: readonly(error),
+    isAdmin: readonly(isAdmin),
     fetchOrders,
     subscribeToUpdates
   }
