@@ -91,7 +91,7 @@ const modes: DeliveryMode[] = ['local', 'pickup', 'delivery']
           <input 
             type="time"
             :value="pickupTime"
-            class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none"
+            class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none text-base"
             @input="emit('update:pickupTime', ($event.target as HTMLInputElement).value)"
           />
         </div>
@@ -104,7 +104,7 @@ const modes: DeliveryMode[] = ['local', 'pickup', 'delivery']
           <textarea
             :value="pickupNotes"
             rows="2"
-            class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none resize-none"
+            class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none resize-none text-base"
             placeholder="Ej: Voy en carro rojo, llámame cuando esté listo..."
             @input="emit('update:pickupNotes', ($event.target as HTMLTextAreaElement).value)"
           />
@@ -168,7 +168,7 @@ const modes: DeliveryMode[] = ['local', 'pickup', 'delivery']
           <textarea
             :value="deliveryNotes"
             rows="2"
-            class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none resize-none"
+            class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none resize-none text-base"
             placeholder="Ej: Apartamento 201, tocar el timbre..."
             @input="emit('update:deliveryNotes', ($event.target as HTMLTextAreaElement).value)"
           />

@@ -84,7 +84,7 @@ const handleInput = (e: Event) => {
     <select
       v-model="countryCode"
       :disabled="disabled"
-      class="w-28 px-3 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60 appearance-none cursor-pointer"
+      class="w-28 px-3 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60 appearance-none cursor-pointer text-base"
     >
       <option v-for="c in countryCodes" :key="c.code" :value="c.code">
         {{ c.flag }} {{ c.code }}
@@ -98,7 +98,7 @@ const handleInput = (e: Event) => {
       inputmode="numeric"
       :disabled="disabled"
       :placeholder="placeholder || '314-368-6786'"
-      class="flex-1 px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
+      class="flex-1 px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60 text-base"
       @input="handleInput"
     />
   </div>

@@ -136,7 +136,7 @@ const formatPhone = (phone: string | null) => {
   <GummyCard
     :hoverable="true"
     padding="md"
-    class="overflow-hidden"
+    class="overflow-hidden min-w-0"
     :class="[currentConfig.cardColor, isActive && order.status !== 'delivered' ? 'ring-2 ring-heat-orange/30' : '']"
   >
     <!-- Header (clickable to expand) -->
@@ -173,14 +173,14 @@ const formatPhone = (phone: string | null) => {
       <p class="text-sm text-heat-gray-dark mb-3">{{ formattedDate }}</p>
 
       <!-- Items -->
-      <div class="space-y-1 mb-3">
+      <div class="space-y-1 mb-3 min-w-0">
         <div 
           v-for="(item, idx) in order.items.slice(0, isExpanded ? order.items.length : 3)" 
           :key="idx" 
-          class="flex justify-between items-start gap-2"
+          class="flex justify-between items-start gap-2 min-w-0"
         >
-          <span class="text-base text-heat-black font-medium flex-1 break-words">{{ item.quantity }}x {{ item.name }}</span>
-          <span v-if="item.price && isExpanded" class="text-sm text-heat-gray-dark font-semibold whitespace-nowrap">
+          <span class="text-sm text-heat-black font-medium flex-1 min-w-0" :class="isExpanded ? 'break-words' : 'truncate'">{{ item.quantity }}x {{ item.name }}</span>
+          <span v-if="item.price && isExpanded" class="text-sm text-heat-gray-dark font-semibold whitespace-nowrap flex-shrink-0">
             {{ new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(item.price) }}
           </span>
         </div>
@@ -282,7 +282,7 @@ const formatPhone = (phone: string | null) => {
         </div>
 
         <!-- Progress -->
-        <div v-if="isActive">
+        <div v-if="isActive" class="min-w-0">
           <div class="flex justify-between mb-1.5">
             <span class="text-sm text-heat-gray-dark">Progreso</span>
             <span class="text-sm font-bold text-heat-orange">{{ progressPercent }}%</span>
@@ -293,12 +293,12 @@ const formatPhone = (phone: string | null) => {
               :style="{ width: `${progressPercent}%` }"
             />
           </div>
-          <div class="flex justify-between mt-2 text-xs font-semibold">
-            <span :class="progressPercent >= 20 ? 'text-heat-orange' : 'text-heat-gray-dark'">Pendiente</span>
-            <span :class="progressPercent >= 40 ? 'text-heat-orange' : 'text-heat-gray-dark'">Cocinando</span>
-            <span :class="progressPercent >= 60 ? 'text-heat-orange' : 'text-heat-gray-dark'">Listo</span>
-            <span :class="progressPercent >= 80 ? 'text-heat-orange' : 'text-heat-gray-dark'">Entregado</span>
-            <span :class="progressPercent >= 100 ? 'text-heat-orange' : 'text-heat-gray-dark'">Pagado</span>
+          <div class="flex justify-between mt-2 text-[10px] font-semibold min-w-0 overflow-hidden">
+            <span :class="progressPercent >= 20 ? 'text-heat-orange' : 'text-heat-gray-dark'">📝</span>
+            <span :class="progressPercent >= 40 ? 'text-heat-orange' : 'text-heat-gray-dark'">🔥</span>
+            <span :class="progressPercent >= 60 ? 'text-heat-orange' : 'text-heat-gray-dark'">✅</span>
+            <span :class="progressPercent >= 80 ? 'text-heat-orange' : 'text-heat-gray-dark'">🤝</span>
+            <span :class="progressPercent >= 100 ? 'text-heat-orange' : 'text-heat-gray-dark'">💰</span>
           </div>
         </div>
       </div>

@@ -59,13 +59,13 @@ const filteredOrders = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-6 overflow-x-hidden">
+  <div class="space-y-6 min-w-0">
     <!-- Header -->
-    <div>
-      <h1 class="text-3xl font-extrabold text-heat-black mb-2">
+    <div class="min-w-0">
+      <h1 class="text-2xl font-extrabold text-heat-black mb-1">
         Historial de Pedidos
       </h1>
-      <p class="text-heat-gray-dark">
+      <p class="text-heat-gray-dark text-sm">
         Revisa el estado de tus pedidos
       </p>
     </div>
@@ -91,18 +91,17 @@ const filteredOrders = computed(() => {
     
     <template v-else>
       <!-- Status Filters (multi-select toggles) -->
-      <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+      <div class="flex flex-wrap gap-2">
         <button 
           v-for="filter in statusFilters"
           :key="filter.value"
-          class="flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-gummy text-xs sm:text-sm font-semibold transition-all"
+          class="flex items-center justify-center gap-1 px-3 py-2 rounded-gummy text-sm font-semibold transition-all flex-shrink-0"
           :class="activeFilters.has(filter.value) 
             ? 'gradient-orange text-white shadow-gummy'
             : 'bg-heat-white text-heat-gray-dark hover:bg-heat-orange/10 border border-heat-gray-medium/30'"
           @click="toggleFilter(filter.value)"
         >
-          <span :class="filter.icon" class="text-base" />
-          <span class="hidden sm:inline">{{ filter.label }}</span>
+          <span :class="filter.icon" />
         </button>
       </div>
       

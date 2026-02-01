@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { toast } from 'vue-sonner'
 import { useProfileStore } from '~/features/user/stores/profile.store'
+import ProfileAvatar from '~/features/user/components/ProfileAvatar.vue'
+import ProfileNotLoggedIn from '~/features/user/components/ProfileNotLoggedIn.vue'
+import ProfileForm from '~/features/user/components/ProfileForm.vue'
 
 useHead({
   title: 'HEat - Mi Perfil'
@@ -10,112 +13,15 @@ const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 const profileStore = useProfileStore()
 
-const isEditing = ref(false)
 const isSaving = ref(false)
-const isGettingLocation = ref(false)
-
-// Local form state (editable copy)
-const formData = ref({
-  name: '',
-  phone: '',
-  address: ''
-})
-
-// Geolocation
-const getLocation = async () => {
-  if (!navigator.geolocation) {
-    toast.error('Tu navegador no soporta geolocalización')
-    return
-  }
-
-  isGettingLocation.value = true
-  
-  try {
-    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject, {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      })
-    })
-
-    const { latitude, longitude } = position.coords
-    
-    // Get address from coordinates using Nominatim
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
-        { headers: { 'Accept-Language': 'es' } }
-      )
-      const data = await response.json()
-      
-      if (data.display_name) {
-        const address = data.display_name.split(',').slice(0, 4).join(', ')
-        formData.value.address = address
-        toast.success('Ubicación detectada', {
-          description: address.slice(0, 50) + (address.length > 50 ? '...' : '')
-        })
-      } else {
-        formData.value.address = `📍 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
-        toast.info('Coordenadas guardadas')
-      }
-    } catch {
-      formData.value.address = `📍 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
-      toast.info('Coordenadas guardadas')
-    }
-  } catch (error: any) {
-    const msgs: Record<number, string> = {
-      1: 'Permiso de ubicación denegado',
-      2: 'Ubicación no disponible',
-      3: 'Tiempo de espera agotado'
-    }
-    toast.error(msgs[error.code] || 'Error al obtener ubicación')
-  } finally {
-    isGettingLocation.value = false
-  }
-}
 
 // Fetch profile on mount
 onMounted(async () => {
   await profileStore.fetchProfile()
 })
 
-// Sync form with profile when profile loads
-watch(() => profileStore.profile, (p) => {
-  if (p && !isEditing.value) {
-    formData.value = {
-      name: p.name || '',
-      phone: p.phone || '',
-      address: p.address || ''
-    }
-  }
-}, { immediate: true })
-
-const startEditing = () => {
-  if (profileStore.profile) {
-    formData.value = {
-      name: profileStore.profile.name || '',
-      phone: profileStore.profile.phone || '',
-      address: profileStore.profile.address || ''
-    }
-  }
-  isEditing.value = true
-}
-
-const cancelEditing = () => {
-  isEditing.value = false
-  // Reset form to current profile
-  if (profileStore.profile) {
-    formData.value = {
-      name: profileStore.profile.name || '',
-      phone: profileStore.profile.phone || '',
-      address: profileStore.profile.address || ''
-    }
-  }
-}
-
-const saveProfile = async () => {
-  if (!formData.value.name.trim()) {
+const handleSaveProfile = async (data: { name: string; phone: string; address: string }) => {
+  if (!data.name.trim()) {
     toast.error('Nombre requerido')
     return
   }
@@ -123,16 +29,14 @@ const saveProfile = async () => {
   isSaving.value = true
   try {
     await profileStore.updateProfile({
-      name: formData.value.name.trim(),
-      phone: formData.value.phone || undefined,
-      address: formData.value.address?.trim() || undefined
+      name: data.name.trim(),
+      phone: data.phone || undefined,
+      address: data.address?.trim() || undefined
     })
     
     toast.success('Perfil actualizado', {
       description: 'Tus datos se han guardado correctamente'
     })
-    
-    isEditing.value = false
   } catch (e: any) {
     toast.error('Error al guardar', {
       description: e.message || 'Intenta de nuevo'
@@ -150,10 +54,10 @@ const logout = async () => {
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto space-y-8 overflow-x-hidden">
+  <div class="space-y-6 min-w-0">
     <!-- Header -->
     <div class="text-center">
-      <h1 class="text-3xl font-extrabold text-heat-black mb-2">
+      <h1 class="text-2xl font-extrabold text-heat-black mb-1">
         Mi Perfil
       </h1>
     </div>
@@ -164,165 +68,24 @@ const logout = async () => {
     </div>
     
     <!-- Not Logged In -->
-    <template v-else-if="!user">
-      <GummyCard padding="lg" class="text-center">
-        <div class="w-24 h-24 mx-auto rounded-full bg-heat-gray-soft flex items-center justify-center mb-6">
-          <span class="i-lucide-user text-4xl text-heat-gray-medium" />
-        </div>
-        
-        <h2 class="text-xl font-bold text-heat-black mb-2">
-          Inicia sesión
-        </h2>
-        <p class="text-heat-gray-dark mb-6">
-          Accede para ver tu historial y realizar pedidos más rápido
-        </p>
-        
-        <div class="space-y-3">
-          <GummyButton variant="primary" class="w-full" @click="navigateTo('/auth')">
-            <span class="i-lucide-log-in mr-2" />
-            Iniciar Sesión
-          </GummyButton>
-          
-          <GummyButton variant="secondary" class="w-full" @click="navigateTo('/auth?mode=register')">
-            Crear Cuenta
-          </GummyButton>
-        </div>
-      </GummyCard>
-    </template>
+    <ProfileNotLoggedIn v-else-if="!user" />
     
     <!-- Logged In -->
     <template v-else>
       <!-- Avatar Section -->
-      <div class="text-center">
-        <div class="relative inline-block">
-          <div class="w-28 h-28 rounded-full bg-heat-cyan overflow-hidden border-4 border-heat-cyan shadow-gummy-cyan">
-            <!-- Google avatar -->
-            <img 
-              v-if="user.user_metadata?.avatar_url"
-              :src="user.user_metadata.avatar_url"
-              :alt="profileStore.displayName"
-              class="w-full h-full object-cover"
-            />
-            <!-- Emoji avatar (default fallback) -->
-            <div 
-              v-else 
-              class="w-full h-full flex items-center justify-center bg-gradient-to-br from-green to-white"
-            >
-              <span class="text-7xl">{{ profileStore.displayEmoji }}</span>
-            </div>
-          </div>
-        </div>
-        
-        <h2 class="text-2xl font-bold text-heat-black mt-4">
-          {{ profileStore.displayName }}
-        </h2>
-        <p class="text-heat-gray-dark">
-          {{ user.email }}
-        </p>
-      </div>
+      <ProfileAvatar
+        :avatar-url="user.user_metadata?.avatar_url"
+        :display-name="profileStore.displayName"
+        :display-emoji="profileStore.displayEmoji"
+        :email="user.email || ''"
+      />
       
       <!-- Profile Form -->
-      <GummyCard padding="lg">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="font-bold text-heat-black">Información Personal</h3>
-          <button 
-            v-if="!isEditing"
-            class="flex items-center gap-1 text-sm text-heat-orange font-semibold hover:bg-heat-orange/10 px-3 py-1.5 rounded-gummy transition-colors"
-            @click="startEditing"
-          >
-            <span class="i-lucide-pencil text-sm" />
-            Editar
-          </button>
-        </div>
-        
-        <form @submit.prevent="saveProfile" class="space-y-4">
-          <!-- Name -->
-          <div>
-            <label class="block text-sm font-semibold text-heat-black mb-2">
-              Nombre completo
-              <span v-if="isEditing" class="text-red-500">*</span>
-            </label>
-            <input 
-              v-model="formData.name"
-              type="text"
-              :disabled="!isEditing"
-              required
-              class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
-              placeholder="Tu nombre"
-            />
-          </div>
-          
-          <!-- Phone -->
-          <div>
-            <label class="block text-sm font-semibold text-heat-black mb-2">
-              Teléfono
-            </label>
-            <PhoneInput 
-              v-model="formData.phone"
-              :disabled="!isEditing"
-              placeholder="314-368-6786"
-            />
-            <p v-if="isEditing" class="text-xs text-heat-gray-dark mt-1">
-              Incluye tu número para que podamos contactarte sobre tu pedido
-            </p>
-          </div>
-          
-          <!-- Address -->
-          <div>
-            <label class="block text-sm font-semibold text-heat-black mb-2">
-              Dirección de entrega
-            </label>
-            
-            <!-- Geolocation button (only when editing) -->
-            <button
-              v-if="isEditing"
-              type="button"
-              class="w-full mb-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-gummy border-2 border-dashed border-heat-cyan/50 text-heat-cyan hover:bg-heat-cyan/5 transition-colors disabled:opacity-50"
-              :disabled="isGettingLocation"
-              @click="getLocation"
-            >
-              <span v-if="isGettingLocation" class="i-lucide-loader-2 animate-spin" />
-              <span v-else class="i-lucide-map-pin" />
-              <span class="text-sm font-medium">
-                {{ isGettingLocation ? 'Obteniendo ubicación...' : 'Usar mi ubicación actual' }}
-              </span>
-            </button>
-
-            <textarea 
-              v-model="formData.address"
-              :disabled="!isEditing"
-              rows="3"
-              class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60 resize-none"
-              placeholder="Calle, número, barrio, piso, referencias..."
-            />
-            <p v-if="isEditing" class="text-xs text-heat-gray-dark mt-1">
-              Necesaria para pedidos a domicilio
-            </p>
-          </div>
-          
-          <!-- Actions -->
-          <div v-if="isEditing" class="flex gap-3 pt-4">
-            <GummyButton 
-              type="button" 
-              variant="ghost" 
-              class="flex-1"
-              :disabled="isSaving"
-              @click="cancelEditing"
-            >
-              Cancelar
-            </GummyButton>
-            <GummyButton 
-              type="submit" 
-              variant="primary" 
-              class="flex-1"
-              :loading="isSaving"
-            >
-              <span class="i-lucide-check mr-2" />
-              Guardar
-            </GummyButton>
-          </div>
-        </form>
-      </GummyCard>
+      <ProfileForm
+        :profile="profileStore.profile"
+        :is-saving="isSaving"
+        @save="handleSaveProfile"
+      />
       
       <!-- Error -->
       <div v-if="profileStore.error" class="p-4 rounded-gummy bg-red-50 text-red-600 flex items-center gap-2">

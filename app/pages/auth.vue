@@ -285,7 +285,7 @@ const handleSubmit = () => {
                 v-model="name"
                 type="text"
                 :disabled="isLoading"
-                class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
+                class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60 text-base"
                 placeholder="Tu nombre"
               />
             </div>
@@ -299,7 +299,7 @@ const handleSubmit = () => {
                 v-model="email"
                 type="email"
                 :disabled="isLoading"
-                class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
+                class="w-full px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60 text-base"
                 placeholder="tu@correo.com"
               />
             </div>
@@ -314,7 +314,7 @@ const handleSubmit = () => {
                   v-model="password"
                   :type="showPassword ? 'text' : 'password'"
                   :disabled="isLoading"
-                  class="w-full px-4 py-3 pr-12 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
+                  class="w-full px-4 py-3 pr-12 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60 text-base"
                   placeholder="••••••••"
                 />
                 <button
@@ -350,7 +350,7 @@ const handleSubmit = () => {
                 <select
                   v-model="countryCode"
                   :disabled="showOtpInput || isLoading"
-                  class="px-3 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60 text-sm font-medium"
+                  class="px-3 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60 text-base font-medium"
                 >
                   <option v-for="c in countryCodes" :key="c.code" :value="c.code">
                     {{ c.flag }} {{ c.code }}
@@ -362,7 +362,7 @@ const handleSubmit = () => {
                   v-model="phoneNumber"
                   type="tel"
                   :disabled="showOtpInput || isLoading"
-                  class="flex-1 px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60"
+                  class="flex-1 px-4 py-3 rounded-gummy bg-heat-gray-soft border border-heat-gray-medium/50 focus:border-heat-orange focus:ring-2 focus:ring-heat-orange/20 transition-all outline-none disabled:opacity-60 text-base"
                   placeholder="314 368 6786"
                 />
               </div>
