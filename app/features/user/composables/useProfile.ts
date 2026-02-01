@@ -2,7 +2,6 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '~/types/database.types'
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row']
-type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
 
 export interface UserProfile {
   id: string
@@ -83,7 +82,8 @@ export function useProfile() {
       }
       
       // Try UPDATE first (profile likely exists from trigger)
-      const { data, error: updateError } = await supabase
+      // Use 'as any' to avoid strict typing issues with generated Supabase types
+      const { data, error: updateError } = await (supabase as any)
         .from('profiles')
         .update(updateData)
         .eq('id', userId)
@@ -91,11 +91,13 @@ export function useProfile() {
       
       // If no rows updated, try INSERT
       if (!updateError && (!data || data.length === 0)) {
-        const { error: insertError } = await supabase
+        const { error: insertError } = await (supabase as any)
           .from('profiles')
           .insert({
             id: userId,
-            ...updateData
+            name: updates.name ?? null,
+            phone: updates.phone ?? null,
+            address: updates.address ?? null
           })
         
         if (insertError) throw insertError

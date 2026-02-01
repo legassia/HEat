@@ -141,6 +141,7 @@ export default defineConfig({
     'i-lucide-square',
     'i-lucide-copy',
     'i-lucide-clipboard-list',
+    'i-lucide-sticky-note',
     'i-lucide-alert-triangle',
     'i-lucide-flame',
     'i-lucide-package-check',

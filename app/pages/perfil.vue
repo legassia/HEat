@@ -206,7 +206,7 @@ const logout = async () => {
             <!-- Emoji avatar (default fallback) -->
             <div 
               v-else 
-              class="w-full h-full flex items-center justify-center bg-gradient-to-br from-heat-orange to-heat-white"
+              class="w-full h-full flex items-center justify-center bg-gradient-to-br from-green to-white"
             >
               <span class="text-7xl">{{ profileStore.displayEmoji }}</span>
             </div>

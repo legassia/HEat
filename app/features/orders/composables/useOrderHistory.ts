@@ -20,7 +20,12 @@ export interface Order {
   status: OrderStatus
   createdAt: Date
   total: number
+  notes: string | null
   items: OrderItem[]
+  // User info (for admins)
+  userId: string | null
+  userName: string | null
+  userPhone: string | null
 }
 
 interface OrderWithItems extends OrderRow {
@@ -84,26 +89,55 @@ export function useOrderHistory() {
       if (fetchError) throw fetchError
 
       const typedData = data as OrderWithItems[] | null
-
-      orders.value = (typedData || []).map(order => ({
-        id: order.id,
-        plateCode: order.plate_code,
-        status: order.status as OrderStatus,
-        createdAt: new Date(order.created_at),
-        total: Number(order.total),
-        items: order.order_items.map(item => {
-          const options = item.selected_options as Array<{ name: string; quantity: number }> || []
-          const productName = item.products?.name || ''
-          const optionNames = options.map(o => o.name).join(', ')
-
-          return {
-            name: productName ? `${productName} ${optionNames}` : optionNames || 'Producto',
-            quantity: item.quantity,
-            price: Number(item.subtotal),
-            selectedOptions: options
+      
+      // Fetch profiles separately for admins (no direct FK from orders to profiles)
+      let profilesMap = new Map<string, { name: string | null; phone: string | null }>()
+      
+      if (isAdmin.value && typedData && typedData.length > 0) {
+        const userIds = [...new Set(typedData.map(o => o.user_id).filter(Boolean))] as string[]
+        
+        if (userIds.length > 0) {
+          // Use 'as any' to avoid strict typing issues with generated Supabase types
+          const { data: profilesData } = await (supabase as any)
+            .from('profiles')
+            .select('id, name, phone')
+            .in('id', userIds)
+          
+          if (profilesData) {
+            for (const p of profilesData as Array<{ id: string; name: string | null; phone: string | null }>) {
+              profilesMap.set(p.id, { name: p.name, phone: p.phone })
+            }
           }
-        })
-      }))
+        }
+      }
+
+      orders.value = (typedData || []).map(order => {
+        const userProfile = order.user_id ? profilesMap.get(order.user_id) : null
+        
+        return {
+          id: order.id,
+          plateCode: order.plate_code,
+          status: order.status as OrderStatus,
+          createdAt: new Date(order.created_at),
+          total: Number(order.total),
+          notes: order.notes,
+          userId: order.user_id,
+          userName: userProfile?.name || null,
+          userPhone: userProfile?.phone || null,
+          items: order.order_items.map(item => {
+            const options = item.selected_options as Array<{ name: string; quantity: number }> || []
+            const productName = item.products?.name || ''
+            const optionNames = options.map(o => o.name).join(', ')
+
+            return {
+              name: productName ? `${productName}${optionNames ? ` (${optionNames})` : ''}` : optionNames || 'Producto',
+              quantity: item.quantity,
+              price: Number(item.subtotal),
+              selectedOptions: options
+            }
+          })
+        }
+      })
     } catch (e: unknown) {
       const errorMsg = e instanceof Error ? e.message : 'Error al cargar pedidos'
       error.value = errorMsg
