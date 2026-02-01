@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { toast } from 'vue-sonner'
 import { useCartStore } from '~/features/cart/store/cart.store'
+import { useDeliveryStore, deliveryModeLabels } from '~/features/cart/stores/delivery.store'
 import { useProfile } from '~/features/user/composables/useProfile'
-import { useDeliveryMode, type DeliveryMode } from '~/features/cart/composables/useDeliveryMode'
-import DeliveryModeSelector from '~/features/cart/components/DeliveryModeSelector.vue'
 
 definePageMeta({
   middleware: 'auth'
 })
 
 useHead({
-  title: 'HEat - Confirmar Pedido'
+  title: 'ArePaisas - Confirmar Pedido'
 })
 
 const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
@@ -18,39 +17,45 @@ const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4
 const user = useSupabaseUser()
 const supabase = useSupabaseClient<any>()
 const cartStore = useCartStore()
-const router = useRouter()
+const deliveryStore = useDeliveryStore()
 const { profile, fetchProfile } = useProfile()
-
-// Delivery mode
-const {
-  mode,
-  tableNumber,
-  pickupTime,
-  pickupNotes,
-  deliveryAddress,
-  deliveryNotes,
-  deliveryFee,
-  isValid: isDeliveryValid,
-  buildOrderNotes,
-  setMode,
-  setTable,
-  loadFromProfile
-} = useDeliveryMode()
 
 const isSubmitting = ref(false)
 const error = ref('')
 const additionalNotes = ref('')
 
-// Auto-load profile data
+// Payment info
+const NEQUI_NUMBER = '3143686786'
+const BANCOLOMBIA_NUMBER = '3143686786'
+
+const formatPhoneDisplay = (num: string) => `${num.slice(0,3)}-${num.slice(3,6)}-${num.slice(6)}`
+
+const copyNumber = async (number: string, label: string) => {
+  try {
+    await navigator.clipboard.writeText(number)
+    toast.success(`Número ${label} copiado`, {
+      description: number,
+      duration: 2000
+    })
+  } catch {
+    toast.error('No se pudo copiar')
+  }
+}
+
+// Load profile on mount
 onMounted(async () => {
   await fetchProfile()
-  if (profile.value?.address) {
-    loadFromProfile(profile.value)
-  }
 })
 
-// Total with delivery fee
-const totalWithDelivery = computed(() => cartStore.total + deliveryFee.value)
+// Redirect if cart is empty
+watch(() => cartStore.isEmpty, (isEmpty) => {
+  if (isEmpty) {
+    navigateTo('/')
+  }
+}, { immediate: true })
+
+// Total with delivery
+const totalWithDelivery = computed(() => cartStore.total + deliveryStore.deliveryFee)
 const formattedTotal = computed(() => 
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })
     .format(totalWithDelivery.value)
@@ -59,9 +64,24 @@ const formattedTotal = computed(() =>
 // Check if can submit
 const canSubmit = computed(() => {
   if (cartStore.isEmpty) return false
-  if (!isDeliveryValid.value) return false
+  if (!deliveryStore.isValid) return false
   if (!profile.value?.phone) return false
   return true
+})
+
+// Delivery summary text
+const deliverySummary = computed(() => {
+  switch (deliveryStore.mode) {
+    case 'local':
+      const tables = [...deliveryStore.selectedTables].sort((a, b) => a - b).join(', ')
+      return `Mesa${deliveryStore.selectedTables.length > 1 ? 's' : ''} ${tables}`
+    case 'pickup':
+      return deliveryStore.pickupTime ? `Recoger a las ${deliveryStore.pickupTime}` : 'Para recoger'
+    case 'delivery':
+      return deliveryStore.deliveryAddress || 'Domicilio'
+    default:
+      return ''
+  }
 })
 
 const submitOrder = async () => {
@@ -85,7 +105,7 @@ const submitOrder = async () => {
 
   try {
     // Build complete notes
-    const notesParts = [buildOrderNotes.value]
+    const notesParts = [deliveryStore.buildOrderNotes]
     if (additionalNotes.value) {
       notesParts.push(`📝 ${additionalNotes.value}`)
     }
@@ -118,8 +138,9 @@ const submitOrder = async () => {
 
     if (itemsError) throw itemsError
 
-    // Clear cart and show success
+    // Clear cart and delivery state
     cartStore.clearCart()
+    deliveryStore.reset()
 
     toast.success(`¡Pedido ${order.plate_code} confirmado!`, {
       description: 'Tu pedido está siendo preparado',
@@ -148,14 +169,14 @@ const submitOrder = async () => {
     <!-- Header -->
     <div class="mb-6">
       <NuxtLink 
-        to="/"
+        to="/carrito"
         class="text-heat-orange text-sm font-semibold hover:underline mb-4 inline-flex items-center gap-1"
       >
         <span class="i-lucide-chevron-left" />
-        Volver al menú
+        Volver al carrito
       </NuxtLink>
       <h1 class="text-2xl font-extrabold text-heat-black">
-        Confirmar Pedido
+        Confirmar y Pagar
       </h1>
     </div>
 
@@ -165,40 +186,25 @@ const submitOrder = async () => {
       {{ error }}
     </div>
 
-    <!-- Delivery Mode Selection -->
-    <GummyCard padding="lg" class="mb-6">
-      <h2 class="font-bold text-heat-black mb-4 flex items-center gap-2">
-        <span class="i-lucide-map-pin text-heat-orange" />
-        ¿Cómo lo quieres?
-      </h2>
-      
-      <DeliveryModeSelector
-        :mode="mode"
-        :table-number="tableNumber"
-        :delivery-address="deliveryAddress"
-        :pickup-time="pickupTime"
-        :pickup-notes="pickupNotes"
-        :delivery-notes="deliveryNotes"
-        @update:mode="setMode"
-        @update:table-number="setTable"
-        @update:delivery-address="deliveryAddress = $event"
-        @update:pickup-time="pickupTime = $event"
-        @update:pickup-notes="pickupNotes = $event"
-        @update:delivery-notes="deliveryNotes = $event"
-      />
-    </GummyCard>
-
-    <!-- Order Summary (Compact) -->
+    <!-- Order Summary -->
     <GummyCard padding="lg" class="mb-6">
       <div class="flex items-center justify-between mb-4">
         <h2 class="font-bold text-heat-black flex items-center gap-2">
-          <span class="i-lucide-shopping-bag text-heat-orange" />
-          Tu Pedido
+          <span class="i-lucide-receipt text-heat-orange" />
+          Resumen del Pedido
         </h2>
-        <span class="text-sm text-heat-gray-dark">{{ cartStore.itemCount }} items</span>
+        <NuxtLink to="/carrito" class="text-sm text-heat-orange hover:underline">
+          Editar
+        </NuxtLink>
       </div>
 
-      <!-- Items (compact list) -->
+      <!-- Delivery info -->
+      <div class="flex items-center gap-2 p-3 rounded-gummy bg-heat-gray-soft/50 mb-4">
+        <span :class="deliveryModeLabels[deliveryStore.mode].icon" class="text-heat-orange" />
+        <span class="text-sm font-medium">{{ deliverySummary }}</span>
+      </div>
+
+      <!-- Items -->
       <div class="space-y-2 mb-4">
         <div 
           v-for="item in cartStore.items" 
@@ -215,25 +221,84 @@ const submitOrder = async () => {
         </div>
       </div>
 
-      <!-- Totals -->
-      <div class="pt-4 border-t border-heat-gray-medium/30 space-y-2">
-        <div class="flex justify-between text-sm text-heat-gray-dark">
-          <span>Subtotal</span>
-          <span>{{ cartStore.formattedSubtotal }}</span>
-        </div>
-        <div v-if="deliveryFee > 0" class="flex justify-between text-sm text-heat-gray-dark">
-          <span>Envío</span>
-          <span>{{ new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(deliveryFee) }}</span>
-        </div>
-        <div v-else class="flex justify-between text-sm text-green-600">
-          <span>Envío</span>
-          <span class="font-semibold">Gratis</span>
-        </div>
-        <div class="flex justify-between text-lg font-bold pt-2">
-          <span>Total</span>
+      <!-- Total -->
+      <div class="pt-4 border-t border-heat-gray-medium/30">
+        <div class="flex justify-between text-lg font-bold">
+          <span>Total a Pagar</span>
           <span class="text-heat-orange">{{ formattedTotal }}</span>
         </div>
       </div>
+    </GummyCard>
+
+    <!-- Payment Methods -->
+    <GummyCard padding="lg" class="mb-6">
+      <h2 class="font-bold text-heat-black mb-4 flex items-center gap-2">
+        <span class="i-lucide-wallet text-heat-orange" />
+        Métodos de Pago
+      </h2>
+
+      <div class="space-y-3">
+        <!-- Nequi -->
+        <button 
+          class="w-full p-4 rounded-gummy bg-gradient-to-r from-pink-50 to-purple-50 border border-pink-200 hover:border-pink-400 transition-colors text-left"
+          @click="copyNumber(NEQUI_NUMBER, 'Nequi')"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
+                <span class="text-white font-bold text-sm">N</span>
+              </div>
+              <div>
+                <p class="font-semibold text-heat-black">Nequi</p>
+                <p class="text-sm text-heat-gray-dark">Toca para copiar</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <p class="font-mono font-bold text-lg text-pink-600">{{ formatPhoneDisplay(NEQUI_NUMBER) }}</p>
+              <span class="i-lucide-copy text-pink-400" />
+            </div>
+          </div>
+        </button>
+
+        <!-- Bancolombia -->
+        <button 
+          class="w-full p-4 rounded-gummy bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 hover:border-amber-400 transition-colors text-left"
+          @click="copyNumber(BANCOLOMBIA_NUMBER, 'Bancolombia')"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-amber-600 flex items-center justify-center">
+                <span class="text-white font-bold text-sm">B</span>
+              </div>
+              <div>
+                <p class="font-semibold text-heat-black">Bancolombia</p>
+                <p class="text-sm text-heat-gray-dark">Toca para copiar</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <p class="font-mono font-bold text-lg text-amber-600">{{ formatPhoneDisplay(BANCOLOMBIA_NUMBER) }}</p>
+              <span class="i-lucide-copy text-amber-400" />
+            </div>
+          </div>
+        </button>
+
+        <!-- Cash -->
+        <div class="p-4 rounded-gummy bg-heat-gray-soft/50 border border-heat-gray-medium/30">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+              <span class="i-lucide-banknote text-white text-lg" />
+            </div>
+            <div>
+              <p class="font-semibold text-heat-black">Efectivo</p>
+              <p class="text-sm text-heat-gray-dark">Pago al momento de la entrega</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-xs text-heat-gray-dark mt-4 text-center">
+        💡 Si pagas por transferencia, envía el comprobante por WhatsApp
+      </p>
     </GummyCard>
 
     <!-- Additional Notes -->
@@ -251,7 +316,7 @@ const submitOrder = async () => {
       />
     </GummyCard>
 
-    <!-- Contact Info (from profile) -->
+    <!-- Contact Info -->
     <GummyCard v-if="profile" padding="lg" class="mb-6">
       <div class="flex items-center justify-between mb-4">
         <h2 class="font-bold text-heat-black flex items-center gap-2">
@@ -296,24 +361,9 @@ const submitOrder = async () => {
     </GummyButton>
 
     <!-- Validation hints -->
-    <div v-if="!canSubmit" class="mt-4 text-center text-sm text-heat-gray-dark">
-      <p v-if="!isDeliveryValid && mode === 'local'">
-        <span class="i-lucide-info text-heat-orange" />
-        Selecciona una mesa para continuar
-      </p>
-      <p v-else-if="!isDeliveryValid && mode === 'delivery'">
-        <span class="i-lucide-info text-heat-orange" />
-        Ingresa tu dirección para continuar
-      </p>
-      <p v-else-if="!profile?.phone">
-        <span class="i-lucide-info text-heat-orange" />
-        Completa tu perfil con tu teléfono
-      </p>
-    </div>
-
-    <!-- Payment Note -->
-    <p class="text-center text-sm text-heat-gray-dark mt-6">
-      El pago se realiza al momento de la entrega
+    <p v-if="!profile?.phone" class="text-center text-sm text-red-500 mt-4">
+      <span class="i-lucide-alert-circle" />
+      Completa tu perfil con tu teléfono para continuar
     </p>
   </div>
 </template>

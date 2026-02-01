@@ -107,9 +107,10 @@ const saveProfile = async () => {
           <h3 class="font-bold text-heat-black">Información Personal</h3>
           <button 
             v-if="!isEditing"
-            class="text-sm text-heat-orange font-semibold hover:underline"
+            class="flex items-center gap-1 text-sm text-heat-orange font-semibold hover:bg-heat-orange/10 px-3 py-1.5 rounded-gummy transition-colors"
             @click="isEditing = true"
           >
+            <span class="i-lucide-pencil text-sm" />
             Editar
           </button>
         </div>

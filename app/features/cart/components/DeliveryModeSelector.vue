@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { type DeliveryMode, deliveryModeLabels, DELIVERY_FEE } from '../composables/useDeliveryMode'
+import { type DeliveryMode, deliveryModeLabels, AVAILABLE_TABLES } from '../stores/delivery.store'
 
 const props = defineProps<{
   mode: DeliveryMode
-  tableNumber: number | null
+  selectedTables: ReadonlySet<number>
   deliveryAddress: string
   pickupTime: string
   pickupNotes: string
@@ -12,7 +12,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:mode': [mode: DeliveryMode]
-  'update:tableNumber': [table: number]
+  'toggleTable': [table: number]
   'update:deliveryAddress': [address: string]
   'update:pickupTime': [time: string]
   'update:pickupNotes': [notes: string]
@@ -20,12 +20,6 @@ const emit = defineEmits<{
 }>()
 
 const modes: DeliveryMode[] = ['local', 'pickup', 'delivery']
-const tables = [1, 2, 3, 4, 5, 6]
-
-const formattedDeliveryFee = computed(() => 
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })
-    .format(DELIVERY_FEE)
-)
 </script>
 
 <template>
@@ -49,25 +43,33 @@ const formattedDeliveryFee = computed(() =>
 
     <!-- Mode-specific content -->
     <div class="pt-2">
-      <!-- LOCAL: Table Selection -->
+      <!-- LOCAL: Table Selection (Multi-select) -->
       <div v-if="mode === 'local'" class="space-y-3">
         <label class="block text-sm font-semibold text-heat-black">
           Selecciona tu mesa
+          <span class="font-normal text-heat-gray-dark">(puedes elegir varias)</span>
         </label>
         <div class="grid grid-cols-3 gap-3">
           <button
-            v-for="table in tables"
+            v-for="table in AVAILABLE_TABLES"
             :key="table"
             class="aspect-square rounded-gummy flex flex-col items-center justify-center transition-all border-2"
-            :class="tableNumber === table 
+            :class="selectedTables.has(table) 
               ? 'border-heat-orange bg-heat-orange/10 text-heat-orange' 
               : 'border-heat-gray-medium/30 bg-heat-white text-heat-gray-dark hover:border-heat-orange/50'"
-            @click="emit('update:tableNumber', table)"
+            @click="emit('toggleTable', table)"
           >
-            <span class="i-lucide-layout-grid text-lg mb-1" />
+            <span 
+              :class="selectedTables.has(table) ? 'i-lucide-check-circle' : 'i-lucide-circle'" 
+              class="text-lg mb-1" 
+            />
             <span class="text-2xl font-bold">{{ table }}</span>
           </button>
         </div>
+        <p v-if="selectedTables.size > 1" class="text-sm text-heat-orange">
+          <span class="i-lucide-info" />
+          {{ selectedTables.size }} mesas seleccionadas
+        </p>
       </div>
 
       <!-- PICKUP: Time and Notes -->
@@ -113,15 +115,11 @@ const formattedDeliveryFee = computed(() =>
       <!-- DELIVERY: Address and Notes -->
       <div v-else-if="mode === 'delivery'" class="space-y-4">
         <div class="p-4 rounded-gummy bg-orange-50 border border-orange-200">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2 text-orange-700">
-              <span class="i-lucide-bike text-lg" />
-              <span class="font-semibold">Coste asociado</span>
-            </div>
-            <!-- <span class="font-bold text-orange-700">{{ formattedDeliveryFee }}</span> -->
+          <div class="flex items-center gap-2 text-orange-700">
+            <span class="i-lucide-bike text-lg" />
+            <span class="font-semibold">Coste asociado</span>
           </div>
           <p class="text-sm text-orange-600 mt-1">
-            <!-- Entrega en tu dirección -->
             Disponible en el sector de Villa Adriana
           </p>
         </div>
