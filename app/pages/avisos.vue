@@ -11,7 +11,7 @@ const announcements = [
     icon: 'i-lucide-clock',
     content: [
       { day: 'Martes - Viernes', hours: '3:30 PM - 10:00 PM' },
-      { day: 'Sábados', hours: '1:00 PM - 10:00 PM' },
+      { day: 'Sábados', hours: '3:30 PM - 10:00 PM' },
     ]
   },
   {
