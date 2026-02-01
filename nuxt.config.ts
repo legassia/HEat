@@ -63,8 +63,21 @@ export default defineNuxtConfig({
       ]
     },
     workbox: {
-      navigateFallback: '/',
-      globPatterns: ['**/*.{js,css,html,png,svg,ico}']
+      navigateFallback: undefined, // Desactivar para SSR
+      globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+      runtimeCaching: [
+        {
+          urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'supabase-cache',
+            expiration: {
+              maxEntries: 100,
+              maxAgeSeconds: 60 * 60 * 24 // 24 horas
+            }
+          }
+        }
+      ]
     },
     client: {
       installPrompt: true
