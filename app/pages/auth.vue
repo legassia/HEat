@@ -118,7 +118,7 @@ const signUpWithEmail = async () => {
     })
     
     if (authError) throw authError
-    successMessage.value = 'Revisa tu correo para confirmar tu cuenta'
+    successMessage.value = 'Revisa tu correo para confirmar tu cuenta (puede llegar a spam)'
   } catch (e: any) {
     error.value = e.message || 'Error al crear cuenta'
   } finally {
