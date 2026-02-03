@@ -10,7 +10,7 @@ export function useSpeech() {
 
   // Check if speech synthesis is supported
   const isSupported = computed(() => typeof window !== 'undefined' && 'speechSynthesis' in window)
-
+ 
   // Get Spanish voice if available
   const getSpanishVoice = (): SpeechSynthesisVoice | null => {
     if (!isSupported.value) return null
